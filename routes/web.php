@@ -44,6 +44,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [LoginController::class, 'admin_dashboard'])->name('admin.admin_dashboard');
     
     Route::get('/inventory', [InventoryController::class, 'items'])->name('admin.inventory');
+    Route::post('/add-item', [InventoryController::class, 'addItem'])->name('admin.add_item');
+    Route::post('/restock-item', [InventoryController::class, 'restock'])->name('admin.restock_item');
+    Route::put('/admin/items/{item}', [InventoryController::class, 'update'])->name('admin.update_item');
 
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');

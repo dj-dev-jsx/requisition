@@ -10,12 +10,6 @@ class InventoryController extends Controller
 {
     public function items()
     {
-        // For now, just return the view with dummy data
-        // $items = [
-        //     ['id' => 1, 'description' => 'Item 1', 'stock_quantity' => 100, 'unit' => 'pcs', 'status' => 'Available'],
-        //     ['id' => 2, 'description' => 'Item 2', 'stock_quantity' => 50, 'unit' => 'pcs', 'status' => 'Low Stock'],
-        //     ['id' => 3, 'description' => 'Item 3', 'stock_quantity' => 0, 'unit' => 'pcs', 'status' => 'Out of Stock'],
-        // ];
 
         $items = Items::all();
 
@@ -23,4 +17,88 @@ class InventoryController extends Controller
             'items' => $items,
         ]);
     }
+
+public function addItem(Request $request)
+{
+    $validated = $request->validate([
+        'description' => 'required|string|max:255',
+        'stock_quantity' => 'required|decimal:2|min:0',
+        'unit' => 'required|string|max:50',
+        'image' => 'nullable|image|max:2048', // optional file validation
+    ]);
+
+    // Handle image upload
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('items', 'public');
+        $validated['image'] = $path;
+    }
+
+    // Automatically set status based on stock_quantity
+    if ($validated['stock_quantity'] == 0) {
+        $validated['status'] = 'out_of_stock';
+    } elseif ($validated['stock_quantity'] < 5) {
+        $validated['status'] = 'low_stock';
+    } else {
+        $validated['status'] = 'in_stock';
+    }
+
+    // Create item
+    Items::create($validated);
+
+    return redirect()->route('admin.inventory')->with('success', 'Item added!');
+}
+
+public function restock(Request $request)
+{
+    $request->validate([
+        'item_id' => 'required|exists:items,id',
+        'additional_stock' => 'required|decimal:2|min:1',
+    ]);
+
+    $item = Items::findOrFail($request->item_id);
+
+    $item->stock_quantity += $request->additional_stock;
+
+    if ($item->stock_quantity == 0) {
+        $item->status = 'out_of_stock';
+    } elseif ($item->stock_quantity < 5) {
+        $item->status = 'low_stock';
+    } else {
+        $item->status = 'in_stock';
+    }
+
+    $item->save();
+
+    return back();
+}
+
+public function update(Request $request, $id)
+{
+    $item = Items::findOrFail($id);
+
+    $validated = $request->validate([
+        'description' => 'required|string|max:255',
+        'stock_quantity' => 'required|decimal:2|min:0',
+        'unit' => 'required|string|max:50',
+        'image' => 'nullable|image|max:2048',
+    ]);
+
+    if ($request->hasFile('image')) {
+        $path = $request->file('image')->store('items', 'public');
+        $validated['image'] = $path;
+    }
+
+    if ($validated['stock_quantity'] == 0) {
+        $validated['status'] = 'out_of_stock';
+    } elseif ($validated['stock_quantity'] < 5) {
+        $validated['status'] = 'low_stock';
+    } else {
+        $validated['status'] = 'in_stock';
+    }
+
+    $item->update($validated);
+
+    return redirect()->route('admin.inventory')->with('success', 'Item updated!');
+}
+
 }

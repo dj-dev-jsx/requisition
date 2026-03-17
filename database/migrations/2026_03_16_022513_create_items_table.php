@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained('categories')->restrictOnDelete();
             $table->decimal("stock_quantity", 8, 2);
             $table->string("unit", 50)->nullable();
-            $table->enum("status", ["in_stock", "out_of_stock"])->nullable();
+            $table->enum("status", ["in_stock", "out_of_stock", "low_stock"])->nullable();
             $table->string("image")->nullable();
             $table->timestamps();
         });
