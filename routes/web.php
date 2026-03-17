@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -40,8 +42,11 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [LoginController::class, 'admin_dashboard'])->name('admin.admin_dashboard');
-    Route::get('/inventory', [LoginController::class, 'inventory'])->name('admin.inventory');
-    Route::get('/users', [LoginController::class, 'users'])->name('admin.users');
+    
+    Route::get('/inventory', [InventoryController::class, 'items'])->name('admin.inventory');
+
+    Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
+    Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
     Route::get('/requests', [LoginController::class, 'requests'])->name('admin.requests');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
 });

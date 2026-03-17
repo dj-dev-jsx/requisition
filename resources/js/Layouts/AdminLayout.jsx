@@ -15,7 +15,7 @@ export default function AdminLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-300">
       {/* Sidebar */}
       <aside className="w-64 bg-[#111827] shadow flex flex-col">
         {/* Logo */}
@@ -30,7 +30,7 @@ export default function AdminLayout({ children }) {
             Dashboard
           </Link>
 
-          <Link href={route("admin.users")} className={navLink("admin.users")}>
+          <Link href={route("admin.view_users")} className={navLink("admin.view_users")}>
             <Users className="w-5 h-5" />
             Users
           </Link>
