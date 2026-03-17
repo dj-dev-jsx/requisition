@@ -39,6 +39,8 @@ public function store(LoginRequest $request): RedirectResponse
     // Redirect based on role
     if ($user->hasRole('admin')) {
         return redirect()->route('admin.admin_dashboard');
+    }elseif ($user->hasRole('user')) {
+        return redirect()->route('user.user_dashboard');
     }
 
     // Fallback if no role assigned

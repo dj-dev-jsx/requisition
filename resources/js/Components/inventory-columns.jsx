@@ -55,7 +55,7 @@ export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => 
             size="sm"
             variant="outline"
             onClick={() => handleRestock(item.id, item.stock_quantity)}
-            className="flex items-center bg-yellow-200 text-gray-800 hover:bg-yellow-300 shadow-sm rounded-sm"
+            className="flex items-center bg-yellow-200 text-gray-800 hover:bg-yellow-300 shadow-lg rounded-sm"
           >
             <PlusCircle className="w-4 h-4 mr-1" /> Restock
           </Button>
@@ -64,7 +64,7 @@ export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => 
             size="sm"
             variant="outline"
             onClick={() => handleEdit(item)}
-            className="flex items-center bg-blue-200 text-gray-800 hover:bg-blue-300 shadow-sm rounded-sm"
+            className="flex items-center bg-blue-200 text-gray-800 hover:bg-blue-300 shadow-lg rounded-sm"
           >
             <Pencil className="w-4 h-4 mr-1" /> Edit
           </Button>
@@ -73,7 +73,7 @@ export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => 
             size="sm"
             variant="outline"
             onClick={() => handleDelete(item.id)}
-            className="flex items-center bg-red-200 text-gray-800 hover:bg-red-300 shadow-sm rounded-sm"
+            className="flex items-center bg-red-200 text-gray-800 hover:bg-red-300 shadow-lg rounded-sm"
           >
             <Trash className="w-4 h-4 mr-1" /> Delete
           </Button>

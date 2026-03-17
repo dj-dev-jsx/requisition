@@ -20,30 +20,27 @@ class UsersController extends Controller
         ]);
     }
 
-    public function addUser(Request $request)
-    {
-        // Validation
-        $validated = $request->validate([
-            'firstName'       => 'required|string|max:50',
-            'lastName'        => 'required|string|max:50',
-            'email'           => 'required|email|unique:users,email',
-            'username'        => 'required|string|unique:users,username|max:30',
-            'password'        => 'required|string|min:6|confirmed',
-            'role'            => 'required|string|exists:roles,name',
-            // 'division'     => 'nullable|string|max:100', // optional for now
-        ]);
+public function addUser(Request $request)
+{
+    $validated = $request->validate([
+        'firstName' => 'required|string|max:50',
+        'lastName' => 'required|string|max:50',
+        'email' => 'required|email|unique:users,email',
+        'username' => 'required|string|unique:users,username|max:30',
+        'password' => 'required|string|min:6|confirmed',
+        'role' => 'required|string|exists:roles,name',
+    ]);
 
-        // Create user
-        $user = User::create([
-            'firstname'     => $validated['firstName'],
-            'lastname'      => $validated['lastName'],
-            'email'    => $validated['email'],
-            'username' => $validated['username'],
-            'password' => Hash::make($validated['password']),
-            // 'division' => $validated['division'] ?? null,
-        ]);
-        $user->assignRole($validated['role']);
+    $user = User::create([
+        'firstname' => $validated['firstName'],
+        'lastname' => $validated['lastName'],
+        'email' => $validated['email'],
+        'username' => $validated['username'],
+        'password' => Hash::make($validated['password']),
+    ]);
 
-        return redirect()->back()->with('success', 'User added successfully!');
-    }
+    $user->assignRole($validated['role']);
+
+    return back()->with('success', 'User added successfully!');
+}
 }

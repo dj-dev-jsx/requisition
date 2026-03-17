@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\User\RequestingController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -15,6 +16,8 @@ Route::get('/', function () {
 
         if ($user->roles->contains('name', 'admin')) {
             return redirect()->route('admin.admin_dashboard');
+        }elseif ($user->roles->contains('name', 'user')) {
+            return redirect()->route('user.user_dashboard');
         }
 
         // fallback: logged in but no role
@@ -52,6 +55,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
     Route::get('/requests', [LoginController::class, 'requests'])->name('admin.requests');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
+});
+
+Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
+    Route::get('/dashboard', [LoginController::class, 'user_dashboard'])->name('user.user_dashboard');
+    Route::get('/items', [RequestingController::class, 'user_items'])->name('user.items');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('user.profile');
 });
 
 Route::middleware('auth')->group(function () {
