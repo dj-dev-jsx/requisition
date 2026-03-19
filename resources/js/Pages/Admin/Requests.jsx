@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { usePage, router } from "@inertiajs/react";
+import { usePage, router, Head } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { DataTable } from "@/components/DataTable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export default function Requests() {
   };
 
   const columns = [
-    { header: "Request #", accessorKey: "request_number" },
+    { header: "Request #", accessorKey: "id", id: "id"  },
     { 
       header: "Requested By", 
       accessorFn: (row) => `${row.user.firstname} ${row.user.lastname}`, 
@@ -75,6 +75,7 @@ export default function Requests() {
 
   return (
     <AdminLayout>
+      <Head title="Requests" />
       <div className="p-6 space-y-6">
         {/* Page Header */}
         <div className="flex items-center justify-between">
