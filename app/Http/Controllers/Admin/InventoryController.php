@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Items;
 use Illuminate\Http\Request;
+use App\Models\RequestItems as UserRequest;
+use App\Models\Requests;
+use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
@@ -22,7 +25,7 @@ public function addItem(Request $request)
 {
     $validated = $request->validate([
         'description' => 'required|string|max:255',
-        'stock_quantity' => 'required|decimal:2|min:0',
+        'stock_quantity' => 'required|numeric|min:0',
         'unit' => 'required|string|max:50',
         'image' => 'nullable|image|max:2048', // optional file validation
     ]);
@@ -52,7 +55,7 @@ public function restock(Request $request)
 {
     $request->validate([
         'item_id' => 'required|exists:items,id',
-        'additional_stock' => 'required|decimal:2|min:1',
+        'additional_stock' => 'required|numeric|min:1',
     ]);
 
     $item = Items::findOrFail($request->item_id);
@@ -78,7 +81,7 @@ public function update(Request $request, $id)
 
     $validated = $request->validate([
         'description' => 'required|string|max:255',
-        'stock_quantity' => 'required|decimal:2|min:0',
+        'stock_quantity' => 'required|numeric|min:0',
         'unit' => 'required|string|max:50',
         'image' => 'nullable|image|max:2048',
     ]);
@@ -99,6 +102,15 @@ public function update(Request $request, $id)
     $item->update($validated);
 
     return redirect()->route('admin.inventory')->with('success', 'Item updated!');
+}
+
+
+public function showRequest(Requests $request)
+{
+    $request->load('items.item', 'user'); // eager load related data
+    return Inertia::render('Admin/RequestDetail', [
+        'request' => $request,
+    ]);
 }
 
 }

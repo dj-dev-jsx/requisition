@@ -19,6 +19,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { toast } from "sonner";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
+
 export default function Inventory({ items }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -28,16 +41,13 @@ export default function Inventory({ items }) {
   unit: "",
 });
 
+const [deleteId, setDeleteId] = useState(null);
+const [deleting, setDeleting] = useState(false);
+
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ ...toast, show: false }), 3000);
   };
 
     const handleSubmit = (e) => {
@@ -56,25 +66,27 @@ export default function Inventory({ items }) {
 
         router.post(route("admin.update_item", form.id), formData, {
         onSuccess: () => {
-            setOpen(false);
-            setForm({ description: "", image: null, stock_quantity: 0, unit: "" });
-            showToast("Item updated successfully!");
+          setOpen(false);
+          setForm({ description: "", image: null, stock_quantity: 0, unit: "" });
+          toast.success(form.id ? "Item updated successfully!" : "Item added successfully!");
         },
+
         onError: (err) => {
-            setErrors(err);
-            showToast("Error updating item.", "error");
+          setErrors(err);
+          toast.error("Please check the form fields.");
         },
         });
     } else {
         router.post(route("admin.add_item"), formData, {
         onSuccess: () => {
-            setOpen(false);
-            setForm({ description: "", image: null, stock_quantity: 0, unit: "" });
-            showToast("Item added successfully!");
+          setOpen(false);
+          setForm({ description: "", image: null, stock_quantity: 0, unit: "" });
+          toast.success(form.id ? "Item updated successfully!" : "Item added successfully!");
         },
+
         onError: (err) => {
-            setErrors(err);
-            showToast("Error! Please fix the form errors.", "error");
+          setErrors(err);
+          toast.error("Please check the form fields.");
         },
         });
     }
@@ -92,12 +104,29 @@ const handleEdit = (item) => {
   setOpen(true);
 };
 
-  const handleDelete = (id) => {
-    if (confirm("Are you sure you want to delete this item?")) {
-      console.log("Delete item", id);
-      // Example: router.delete(`/inventory/${id}`);
-    }
-  };
+const confirmDelete = (id) => {
+  setDeleteId(id);
+};
+
+const handleDelete = () => {
+  if (!deleteId) return;
+
+  const id = deleteId;
+  setDeleting(true);
+  setDeleteId(null);
+
+  router.delete(`/items/${id}`, {
+    onSuccess: () => {
+      toast.success("Item deleted successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to delete item.");
+    },
+    onFinish: () => {
+      setDeleting(false);
+    },
+  });
+};
 
     const [restockOpen, setRestockOpen] = useState(false);
     const [restockForm, setRestockForm] = useState({
@@ -123,23 +152,22 @@ const handleEdit = (item) => {
     {
       onSuccess: () => {
         setRestockOpen(false);
-
         setRestockForm({
           item_id: null,
           additional_stock: 0,
           current_stock: 0,
         });
 
-        showToast("Item restocked successfully!");
+        toast.success("Item restocked successfully!");
       },
       onError: () => {
-        showToast("Failed to restock item.", "error");
+        toast.error("Failed to restock item.");
       },
     }
   );
 };
 
-  const columns = getInventoryColumns(handleEdit, handleDelete, handleRestock);
+  const columns = getInventoryColumns(handleEdit, confirmDelete, handleRestock);
 
   return (
     <AdminLayout>
@@ -298,6 +326,29 @@ const handleEdit = (item) => {
     </form>
   </DialogContent>
 </Dialog>
+
+<AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+  <AlertDialogContent className="bg-white rounded-xl shadow-xl">
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete Item?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete the item.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
+
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+
+      <AlertDialogAction
+        onClick={handleDelete}
+        disabled={deleting}
+        className="bg-red-600 hover:bg-red-700"
+      >
+        {deleting ? "Deleting..." : "Yes, Delete"}
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
     </AdminLayout>
   );
 }

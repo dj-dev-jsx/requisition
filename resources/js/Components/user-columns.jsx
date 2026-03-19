@@ -1,7 +1,7 @@
 import { Pencil, Trash } from "lucide-react";
 import { Button } from "./ui/button";
 
-export const columns = [
+export const columns = (onEdit, onDelete) => [
   {
     accessorKey: "id",
     header: "ID",
@@ -30,19 +30,21 @@ export const columns = [
 
       return (
         <div className="flex gap-2">
+          {/* EDIT */}
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleEdit(user.id)}
+            onClick={() => onEdit(user)}
             className="flex items-center bg-blue-200 text-gray-800 hover:bg-blue-300 shadow-md rounded-sm"
           >
             <Pencil className="w-4 h-4 mr-1" /> Edit
           </Button>
 
+          {/* DELETE */}
           <Button
             size="sm"
             variant="outline"
-            onClick={() => handleDelete(user.id)}
+            onClick={() => onDelete(user.id)}
             className="flex items-center bg-red-200 text-gray-800 hover:bg-red-300 shadow-md rounded-sm"
           >
             <Trash className="w-4 h-4 mr-1" /> Delete
@@ -52,16 +54,3 @@ export const columns = [
     },
   },
 ];
-
-const handleEdit = (id) => {
-  // Redirect to edit page or open modal
-  console.log("Edit user", id);
-};
-
-const handleDelete = (id) => {
-  // Call Inertia delete or open confirm modal
-  if (confirm("Are you sure you want to delete this user?")) {
-    console.log("Delete user", id);
-    // Example: router.delete(`/users/${id}`);
-  }
-};

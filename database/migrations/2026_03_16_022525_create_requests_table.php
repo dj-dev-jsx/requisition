@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum("status", ["processed", "pending"])->default("pending");
             $table->text("remarks")->nullable();
             $table->foreignId('processed_by')->nullable()->constrained('users')->restrictOnDelete();
-            $table->timestamp("approved_at");
+            $table->dateTime("approved_at", $precision = 0)->nullable();
             $table->timestamps();
         });
     }

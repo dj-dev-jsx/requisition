@@ -20,6 +20,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+import { toast } from "sonner";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from "@/components/ui/alert-dialog";
+
 export default function Users({ users, roles }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
@@ -33,43 +46,82 @@ export default function Users({ users, roles }) {
   // division: "", // optional
 });
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+  const [deleteId, setDeleteId] = useState(null);
+const [editUser, setEditUser] = useState(null);
+const [deleting, setDeleting] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ ...toast, show: false }), 3000);
-  };
+const handleSubmit = (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    router.post(route("admin.add_user"), form, {
-      onSuccess: () => {
-        setOpen(false);
-        setForm({ firstName: "", lastName: "", email: "", username: "", password: "", password_confirmation: "", role: "" });
-        setErrors({});
-        showToast("User added successfully!");
-      },
-      onError: (err) => {
-        setErrors(err);
-        showToast("Error! Please fix the form errors.", "error");
-      },
-    });
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      router.delete(`/users/${id}`, {
-        onSuccess: () => showToast("User deleted successfully!"),
-        onError: () => showToast("Error deleting user.", "error"),
+  router.post(route("admin.add_user"), form, {
+    onSuccess: () => {
+      setOpen(false);
+      setForm({
+        firstName: "",
+        lastName: "",
+        email: "",
+        username: "",
+        password: "",
+        password_confirmation: "",
+        role: "",
       });
-    }
-  };
+      setErrors({});
 
+      toast.success("User added successfully!", {
+        description: "The user has been created.",
+      });
+    },
+
+    onError: (err) => {
+      setErrors(err);
+
+      toast.error("Failed to add user", {
+        description: "Please check the form fields.",
+      });
+    },
+  });
+};
+
+const confirmDelete = (id) => {
+  setDeleteId(id);
+};
+const handleEdit = (user) => {
+  setForm({
+    id: user.id,
+    firstName: user.firstname,
+    lastName: user.lastname,
+    email: user.email,
+    username: user.username,
+    password: "",
+    password_confirmation: "",
+    role: user.role ?? "",
+  });
+
+  setOpen(true);
+};
+const handleDelete = () => {
+  if (!deleteId) return;
+
+  const id = deleteId;
+  setDeleting(true);
+  setDeleteId(null);
+
+  router.delete(`/users/${id}`, {
+    onSuccess: () => {
+      toast.success("User deleted successfully!");
+    },
+    onError: () => {
+      toast.error("Failed to delete user.");
+    },
+    onFinish: () => {
+      setDeleting(false);
+    },
+  });
+};
   return (
     <AdminLayout>
       <Head title="Users" />
@@ -101,11 +153,9 @@ export default function Users({ users, roles }) {
 
           <CardContent>
             <DataTable
-              columns={[
-                ...columns,
-              ]}
-              data={users}
-            />
+  columns={columns(handleEdit, confirmDelete)} // ✅ FIXED
+  data={users}
+/>
           </CardContent>
         </Card>
       </div>
@@ -244,17 +294,26 @@ export default function Users({ users, roles }) {
       </form>
     </DialogContent>
 </Dialog>
+<AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+  <AlertDialogContent className="bg-white rounded-xl shadow-xl">
+    <AlertDialogHeader>
+      <AlertDialogTitle>Delete User?</AlertDialogTitle>
+      <AlertDialogDescription>
+        This action cannot be undone. This will permanently delete the user.
+      </AlertDialogDescription>
+    </AlertDialogHeader>
 
-      {/* Toast Notification */}
-      {toast.show && (
-        <div
-          className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-md shadow-md text-white ${
-            toast.type === "success" ? "bg-green-500" : "bg-red-500"
-          }`}
-        >
-          {toast.message}
-        </div>
-      )}
+    <AlertDialogFooter>
+      <AlertDialogCancel>Cancel</AlertDialogCancel>
+      <AlertDialogAction
+        onClick={handleDelete}
+        className="bg-red-600 hover:bg-red-700"
+      >
+        Yes, Delete
+      </AlertDialogAction>
+    </AlertDialogFooter>
+  </AlertDialogContent>
+</AlertDialog>
     </AdminLayout>
   );
 }

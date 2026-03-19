@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, usePage } from "@inertiajs/react";
 import { User, LayoutDashboard, Package, LogOut } from "lucide-react";
+import { Toaster } from "sonner";
 
 export default function UsersLayout({ children }) {
   const { url } = usePage();
@@ -71,6 +72,7 @@ export default function UsersLayout({ children }) {
         <div className="max-w-7xl mx-auto p-6">
           <div className="bg-white rounded-xl shadow-sm border p-6">
             {children}
+            <Toaster position="top-right" richColors />
           </div>
         </div>
       </main>
