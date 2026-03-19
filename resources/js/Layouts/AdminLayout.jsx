@@ -3,6 +3,7 @@ import { Link, router, usePage } from "@inertiajs/react";
 import { Home, Users, Settings, LogOut, BoxesIcon, ClipboardIcon, Bell, User } from "lucide-react";
 import { Toaster } from "sonner";
 import axios from "axios";
+import { formatDistanceToNow } from "date-fns";
 
 export default function AdminLayout({ children }) {
   const { url } = usePage();
@@ -17,12 +18,32 @@ export default function AdminLayout({ children }) {
       isActive ? "bg-white text-gray-800" : "text-white hover:bg-gray-100 hover:text-gray-800"
     }`;
   };
+  const markAsReadAndRedirect = async (notification) => {
+  try {
+    await axios.post(`/api/admin/notifications/${notification.id}/read`);
 
+    // Update UI instantly (no reload needed)
+    setNotifications((prev) =>
+      prev.map((n) =>
+        n.id === notification.id ? { ...n, read_at: new Date() } : n
+      )
+    );
+
+    setUnreadCount((prev) => Math.max(prev - 1, 0));
+
+    setOpenDropdown(false);
+
+    // Redirect to request detail
+    router.visit(route("admin.requests.show", notification.data.request_id));
+  } catch (err) {
+    console.error("Failed to mark as read", err);
+  }
+};
   const fetchNotifications = async () => {
     try {
       const response = await axios.get("/api/admin/notifications");
       setNotifications(response.data);
-      const unread = response.data.filter((n) => !n.read).length;
+      const unread = response.data.filter((n) => !n.read_at).length;
       setUnreadCount(unread);
     } catch (error) {
       console.error("Failed to fetch notifications:", error);
@@ -97,22 +118,78 @@ export default function AdminLayout({ children }) {
               </button>
 
               {openDropdown && (
-                <div className="absolute right-0 mt-2 w-72 bg-white rounded shadow-lg z-50">
-                  {notifications.length === 0 && (
-                    <p className="p-2 text-gray-500">No new requests</p>
-                  )}
-                  {notifications.map((n) => (
-                    <Link
-                      key={n.id}
-                      href={route("admin.requests.show", n.data.request_id)} // dynamic request detail page
-                      className="block px-4 py-2 hover:bg-gray-100"
-                      onClick={() => setOpenDropdown(false)}
-                    >
-                      {n.data.message}
-                    </Link>
-                  ))}
-                </div>
-              )}
+  <div className="absolute right-0 mt-3 w-80 bg-white rounded-xl shadow-xl z-50 overflow-hidden border">
+    
+    {/* Header */}
+    <div className="p-3 border-b font-semibold text-gray-700 flex justify-between">
+      Notifications
+      {unreadCount > 0 && (
+        <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+          {unreadCount} new
+        </span>
+      )}
+    </div>
+
+    {/* List */}
+    <div className="max-h-80 overflow-y-auto">
+      {notifications.length === 0 && (
+        <p className="p-4 text-gray-500 text-sm text-center">
+          No notifications
+        </p>
+      )}
+
+      {notifications.map((n) => {
+  const isUnread = !n.read_at;
+  const isProcessed = n.data.status === "processed"; // ✅ use 'processed' here
+
+  return (
+    <div
+      key={n.id}
+      onClick={() => markAsReadAndRedirect(n)}
+      className={`relative cursor-pointer px-4 py-3 border-b hover:bg-gray-50 transition ${
+        isUnread ? "bg-blue-50" : ""
+      }`}
+    >
+      {/* Message */}
+      <p
+        className={`text-sm font-medium ${
+          isProcessed ? "text-green-700" : "text-gray-800"
+        }`}
+      >
+        {n.data.message} {isProcessed && "(Processed)"}
+      </p>
+
+      {/* Details */}
+      <p className="text-xs text-gray-600 mt-1">
+        {n.data.user_name} • #{n.data.request_number}
+      </p>
+
+      {/* Time */}
+      <p className="text-xs text-gray-400 mt-1">
+        {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+      </p>
+
+      {/* Unread dot */}
+      {isUnread && (
+        <span className="absolute right-4 top-4 w-2 h-2 bg-blue-500 rounded-full"></span>
+      )}
+    </div>
+  );
+})}
+    </div>
+
+    {/* Footer */}
+    <div className="p-2 text-center border-t">
+      <Link
+        href={route("admin.requests")}
+        className="text-sm text-blue-600 hover:underline"
+        onClick={() => setOpenDropdown(false)}
+      >
+        View all requests
+      </Link>
+    </div>
+  </div>
+)}
             </div>
 
             {/* User Profile */}

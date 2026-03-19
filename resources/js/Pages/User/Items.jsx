@@ -167,44 +167,44 @@ const submitRequest = () => {
             {/* ✅ SUBMIT BUTTON */}
             {selectedItems.length > 0 && (
               <AlertDialog>
-  <AlertDialogTrigger asChild>
-    <button
-      disabled={loading}
-      className="w-full mt-5 bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition"
-    >
-      {loading
-        ? "Submitting..."
-        : `Submit Request (${selectedItems.length})`}
-    </button>
-  </AlertDialogTrigger>
+                <AlertDialogTrigger asChild>
+                  <button
+                    disabled={loading}
+                    className="w-full mt-5 bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 transition"
+                  >
+                    {loading
+                      ? "Submitting..."
+                      : `Submit Request (${selectedItems.length})`}
+                  </button>
+                </AlertDialogTrigger>
 
-  <AlertDialogContent>
-    <AlertDialogHeader>
-      <AlertDialogTitle>
-        Confirm Request
-      </AlertDialogTitle>
-      <AlertDialogDescription>
-        Are you sure you want to submit this request?
-        <br />
-        <span className="font-semibold">
-          {selectedItems.length} item(s)
-        </span>{" "}
-        will be sent for approval.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Confirm Request
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to submit this request?
+                      <br />
+                      <span className="font-semibold">
+                        {selectedItems.length} item(s)
+                      </span>{" "}
+                      will be sent for approval.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
 
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
 
-      <AlertDialogAction
-        onClick={submitRequest}
-        className="bg-green-600 hover:bg-green-700"
-      >
-        Yes, Submit
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+                    <AlertDialogAction
+                      onClick={submitRequest}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      Yes, Submit
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\RequestsController;
 use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\ProfileController;
@@ -50,12 +51,14 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/add-item', [InventoryController::class, 'addItem'])->name('admin.add_item');
     Route::post('/restock-item', [InventoryController::class, 'restock'])->name('admin.restock_item');
     Route::put('/admin/items/{item}', [InventoryController::class, 'update'])->name('admin.update_item');
+    Route::get('/requests', [RequestsController::class, 'requests'])->name('admin.requests');
     Route::get('/requests/{request}', [InventoryController::class, 'showRequest'])->name('admin.requests.show');
-
+    Route::post('/requests/{request}/approve', [InventoryController::class, 'approve'])->name('admin.requests.approve');
+    Route::get('/requests/{request}/print', [InventoryController::class, 'printRis'])->name('admin.requests.print');
+    
 
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
-    Route::get('/requests', [LoginController::class, 'requests'])->name('admin.requests');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
 });
 
@@ -69,6 +72,12 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
 Route::get('/api/admin/notifications', function() {
     $notifications = Auth::user()->notifications()->latest()->get();
     return response()->json($notifications);
+});
+Route::post('/api/admin/notifications/{id}/read', function ($id) {
+    $notification = Auth::user()->notifications()->findOrFail($id);
+    $notification->markAsRead();
+
+    return response()->json(['success' => true]);
 });
 
 Route::middleware('auth')->group(function () {

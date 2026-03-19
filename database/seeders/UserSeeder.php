@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
             'middlename' => '',
             'email' => 'admin@gmail.com',
             'username'=> 'admin',
+            'office' => 'Supply Office',
             'email_verified_at' => now(),
             'password' => Hash::make('password123'),
         ]);
@@ -33,18 +34,24 @@ class UserSeeder extends Seeder
                 'firstname' => 'Juan',
                 'lastname' => 'Dela Cruz',
                 'middlename' => 'M.',
+                'username' => 'jdelacruz',
+                'office' => 'Records Office',
                 'email' => 'juan.delacruz@email.com',
             ],
             [
                 'firstname' => 'Ana',
                 'lastname' => 'Reyes',
                 'middlename' => 'S.',
+                'username' => 'areyes',
+                'office' => 'Accounting Office',
                 'email' => 'ana.reyes@email.com',
             ],
             [
                 'firstname' => 'Carlos',
                 'lastname' => 'Tan',
                 'middlename' => 'G.',
+                'username' => 'ctan',
+                'office' => 'ICT Office',
                 'email' => 'carlos.tan@email.com',
             ],
         ];

@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
-            $table->string("request_number")->nullable();
             $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
             $table->enum("status", ["processed", "pending"])->default("pending");
             $table->text("remarks")->nullable();

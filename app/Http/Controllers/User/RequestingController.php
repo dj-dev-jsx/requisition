@@ -34,7 +34,6 @@ class RequestingController extends Controller
 
     // ✅ Create main request
     $req = UserRequest::create([
-        'request_number' => 'REQ-' . strtoupper(Str::random(6)),
         'user_id' => $user->id,
         'status' => 'pending',
     ]);

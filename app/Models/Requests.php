@@ -24,4 +24,9 @@ class Requests extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function ris()
+{
+    return $this->hasOne(RIS::class, 'request_id', 'id');
+}
+
 }

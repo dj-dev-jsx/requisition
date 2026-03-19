@@ -26,6 +26,7 @@ public function addUser(Request $request)
         'firstName' => 'required|string|max:50',
         'lastName' => 'required|string|max:50',
         'email' => 'required|email|unique:users,email',
+        'office' => 'required|string|max:100',
         'username' => 'required|string|unique:users,username|max:30',
         'password' => 'required|string|min:6|confirmed',
         'role' => 'required|string|exists:roles,name',

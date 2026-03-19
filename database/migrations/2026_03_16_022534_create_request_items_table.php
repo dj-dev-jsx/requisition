@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('request_id')->constrained('requests')->restrictOnDelete();
             $table->foreignId('item_id')->constrained('items')->restrictOnDelete();
             $table->decimal("quantity", 8, 2);
+            $table->decimal("issued_quantity", 8, 2)->nullable();
             $table->timestamps();
         });
     }

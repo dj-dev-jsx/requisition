@@ -10,6 +10,7 @@ class RequestItems extends Model
         'request_id',
         'item_id',
         'quantity',
+        'issued_quantity',
     ];
 
     public function request()
@@ -20,5 +21,8 @@ class RequestItems extends Model
     public function item()
     {
         return $this->belongsTo(Items::class, 'item_id');
+    }
+        public function ris() {
+        return $this->hasOne(Ris::class, 'request_id');
     }
 }

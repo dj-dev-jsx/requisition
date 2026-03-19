@@ -7,6 +7,7 @@ use App\Models\Items;
 use Illuminate\Http\Request;
 use App\Models\RequestItems as UserRequest;
 use App\Models\Requests;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
@@ -112,5 +113,76 @@ public function showRequest(Requests $request)
         'request' => $request,
     ]);
 }
+
+public function approve(Request $req, Requests $request)
+{
+    // ✅ Prevent double approval
+    if ($request->status !== 'pending') {
+        return redirect()->route('admin.requests')
+            ->withErrors(['error' => 'This request has already been processed.']);
+    }
+
+    // Loop through each requested item
+    foreach ($request->items as $item) {
+        $issuedQty = (int) ($req->items[(string) $item->id] ?? 0);
+        $stock = $item->item->stock_quantity;
+
+        if ($issuedQty > $stock) {
+            return back()->withErrors([
+                'error' => 'Not enough stock for ' . $item->item->description
+            ]);
+        }
+
+        if ($issuedQty > 0) {
+            $item->item->decrement('stock_quantity', $issuedQty);
+        }
+
+        $item->update(['issued_quantity' => $issuedQty]);
+    }
+
+    // ✅ Update request status to processed/approved
+    $request->update([
+        'status' => 'processed',
+        'processed_by' => auth()->id(),
+        'approved_at' => now(),
+    ]);
+
+    // ✅ Create RIS if it doesn't exist
+    if (!$request->ris) {
+        $ris = \App\Models\RIS::create([
+            'request_id' => $request->id,
+            'ris_number' => 'RIS-' . now()->format('Ymd') . '-' . $request->id,
+            'issued_by' => auth()->id(),
+            'requested_by' => $request->user_id,
+            'received_by' => null, // you can fill later
+        ]);
+    }
+
+    // ✅ Redirect to print PDF immediately
+    return back()->with('success', 'Request approved successfully.');
+}
+
+public function printRis(Requests $request)
+{
+    // Correctly fetch the RIS
+    $ris = $request->ris()->with(['issuedBy', 'requestedBy', 'receivedBy'])->first();
+    // Fetch the request items (these belong to Requests)
+    $items = $request->items()->with('item')->get();
+
+    $logo = public_path('logo.png');
+    if (!file_exists($logo)) $logo = null;
+
+    $risNumber = $ris->ris_number ?? 'N/A';
+
+    $pdf = Pdf::loadView('admin.requests.pdf', [
+        'ris' => $ris,
+        'request' => $request,
+        'items' => $items,
+        'logo' => $logo,
+    ])->setPaper('a4', 'portrait');
+
+    return $pdf->stream("RIS-{$risNumber}.pdf");
+}
+
 
 }

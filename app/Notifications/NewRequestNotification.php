@@ -24,10 +24,15 @@ class NewRequestNotification extends Notification
     }
 
     public function toDatabase($notifiable)
-    {
-        return [
-            'message' => "New request from {$this->request->user->name}",
-            'request_id' => $this->request->id, // <-- add request ID
-        ];
-    }
+{
+    return [
+        'request_id' => $this->request->id,
+        'request_number' => $this->request->request_number,
+        'user_name' => $this->request->user->firstname . ' ' . $this->request->user->lastname,
+        'status' => $this->request->status, // 'processed' when approved
+        'message' => $this->request->status === 'processed'
+                     ? 'Request has been processed'
+                     : 'New request submitted',
+    ];
+}
 }

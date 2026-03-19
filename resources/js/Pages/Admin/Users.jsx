@@ -40,6 +40,7 @@ export default function Users({ users, roles }) {
   lastName: "",
   email: "",
   username: "",
+  office: "",
   password: "",
   password_confirmation: "",
   role: "",
@@ -65,6 +66,7 @@ const handleSubmit = (e) => {
         lastName: "",
         email: "",
         username: "",
+          office: "",
         password: "",
         password_confirmation: "",
         role: "",
@@ -96,6 +98,7 @@ const handleEdit = (user) => {
     lastName: user.lastname,
     email: user.email,
     username: user.username,
+    office: user.office,
     password: "",
     password_confirmation: "",
     role: user.role ?? "",
@@ -211,19 +214,32 @@ const handleDelete = () => {
         </div>
 
         {/* Username */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="username">Username</Label>
+            <Input
+              id="username"
+              name="username"
+              value={form.username || ""}
+              onChange={handleChange}
+              placeholder="Enter username"
+              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
+            />
+            {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
+          </div>
         <div>
-          <Label htmlFor="username">Username</Label>
+          <Label htmlFor="office">Office</Label>
           <Input
-            id="username"
-            name="username"
-            value={form.username || ""}
+            id="office"
+            name="office"
+            value={form.office || ""}
             onChange={handleChange}
-            placeholder="Enter username"
+            placeholder="Enter office"
             className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
           />
-          {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
+          {errors.office && <p className="text-red-600 text-sm mt-1">{errors.office}</p>}
         </div>
-
+        </div>
         {/* Password & Confirm Password */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
