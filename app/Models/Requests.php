@@ -10,7 +10,7 @@ class Requests extends Model
         'request_number',
         'user_id',
         'status',
-        'remarks',
+        'purpose',
         'processed_by',
         'approved_at',
     ];

@@ -80,10 +80,9 @@
                 $quantityRequested = intval($issued->quantity ?? 0);
                 $quantityIssued = intval($issued->issued_quantity ?? 0);
                 $remarks = $issued->remarks ?? '';
-                $stockNumber = $inventoryItem->id ?? '';
             @endphp
             <tr class="with-border text-center">
-                <td>{{ $stockNumber }}</td>
+                <td></td>
                 <td>{{ $unit }}</td>
                 <td class="text-left" style="padding-left:8px;">{{ $description }}</td>
                 <td>{{ $quantityIssued }}</td>
@@ -94,9 +93,6 @@
             </tr>
         @endforeach
 
-        @for($i=0; $i<3; $i++)
-            <tr class="with-border"><td colspan="8">&nbsp;</td></tr>
-        @endfor
 
         <tr class="with-border">
             <td colspan="8" style="font-size:14px;">
@@ -125,7 +121,7 @@
             <td class="font-bold">{{ $requestedByName }}</td>
             <td class="font-bold">Adeline C. Soriano</td>
             <td class="font-bold">{{ $issuedByName }}</td>
-            <td class="font-bold">{{ $receivedByName }}</td>
+            <td class="font-bold">{{ $requestedByName }}</td>
         </tr>
         <tr>
             <td class="text-left">Designation :</td>

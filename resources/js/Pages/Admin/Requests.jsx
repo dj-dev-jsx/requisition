@@ -1,4 +1,3 @@
-import React, { useState } from "react";
 import { usePage, router, Head } from "@inertiajs/react";
 import AdminLayout from "@/Layouts/AdminLayout";
 import { DataTable } from "@/components/DataTable";
@@ -7,10 +6,33 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Printer, Eye } from "lucide-react";
 import { toast } from "sonner";
+import React, { useState, useEffect } from "react";
 
 export default function Requests() {
-  const { requests } = usePage().props; // eager loaded with user, items, ris
-  const [printRequestId, setPrintRequestId] = useState(null);
+  const { requests, filters } = usePage().props;
+
+const [search, setSearch] = useState(filters?.search || "");
+const [from, setFrom] = useState(filters?.from || "");
+const [to, setTo] = useState(filters?.to || "");
+
+useEffect(() => {
+  const delay = setTimeout(() => {
+    router.get(
+      route("admin.requests"),
+      {
+        search,
+        from,
+        to,
+      },
+      {
+        preserveState: true,
+        replace: true,
+      }
+    );
+  }, 400);
+
+  return () => clearTimeout(delay);
+}, [search, from, to]);
 
   const statusColor = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -36,12 +58,8 @@ export default function Requests() {
       )
     },
     {
-      header: "RIS Number",
-      accessorFn: (row) => (row.ris ? row.ris.ris_number : "-"),
-      id: "ris_number",
-      cell: ({ getValue }) => (
-        <span className="font-medium">{getValue() || "-"}</span>
-      ),
+        header: "Purpose",
+        accessorKey: "purpose",
     },
     { 
       header: "Approved At", 
@@ -87,15 +105,88 @@ export default function Requests() {
           </div>
         </div>
 
+<div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+  
+  {/* SEARCH */}
+  <input
+    type="text"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    placeholder="Search requests..."
+    className="w-full md:w-1/3 border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+  />
+
+  {/* DATE FILTERS */}
+  <div className="flex gap-2 w-full md:w-auto">
+    <input
+      type="date"
+      value={from}
+      onChange={(e) => setFrom(e.target.value)}
+      className="w-full border rounded-xl px-3 py-2 text-sm"
+    />
+
+    <input
+      type="date"
+      value={to}
+      onChange={(e) => setTo(e.target.value)}
+      className="w-full border rounded-xl px-3 py-2 text-sm"
+    />
+  </div>
+</div>
+
         {/* Table Card */}
         <Card className="shadow-sm border">
           <CardHeader>
             <CardTitle>Request List</CardTitle>
           </CardHeader>
 
-          <CardContent>
-            <DataTable columns={columns} data={requests} />
-          </CardContent>
+<CardContent>
+  <p className="text-sm text-gray-500 mb-2">
+    Showing {requests.data.length} of {requests.total} requests
+  </p>
+
+  <DataTable columns={columns} data={requests.data} />
+
+  {/* Pagination */}
+  <div className="flex justify-center space-x-2 mt-4">
+    {/* Previous button */}
+    <Button
+      disabled={!requests.prev_page_url}
+      onClick={() =>
+        requests.prev_page_url &&
+        router.get(requests.prev_page_url, {}, { preserveState: true })
+      }
+      className="px-3 py-1"
+    >
+      Previous
+    </Button>
+
+    {/* Page numbers */}
+    {Array.from({ length: requests.last_page }, (_, i) => i + 1).map((page) => (
+      <Button
+        key={page}
+        onClick={() =>
+          router.get(route('admin.requests'), { page, search, from, to }, { preserveState: true })
+        }
+        className={`px-3 py-1 ${requests.current_page === page ? 'bg-blue-500 text-white' : ''}`}
+      >
+        {page}
+      </Button>
+    ))}
+
+    {/* Next button */}
+    <Button
+      disabled={!requests.next_page_url}
+      onClick={() =>
+        requests.next_page_url &&
+        router.get(requests.next_page_url, {}, { preserveState: true })
+      }
+      className="px-3 py-1"
+    >
+      Next
+    </Button>
+  </div>
+</CardContent>
         </Card>
       </div>
     </AdminLayout>

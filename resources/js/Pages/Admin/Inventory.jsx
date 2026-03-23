@@ -1,6 +1,6 @@
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, router } from "@inertiajs/react";
-import { useState } from "react";
+import { Head, router, usePage } from "@inertiajs/react";
+import { useEffect, useState } from "react";
 
 import { DataTable } from "@/components/DataTable";
 import { getInventoryColumns } from "@/components/inventory-columns";
@@ -32,14 +32,32 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 
-export default function Inventory({ items }) {
+export default function Inventory({ }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-  description: "",
+  description: "",  
   image: "",
   stock_quantity: 0,
   unit: "",
 });
+const { items, filters } = usePage().props;
+
+const [search, setSearch] = useState(filters?.search || "");
+
+useEffect(() => {
+  const delay = setTimeout(() => {
+    router.get(
+      route("admin.inventory"), // make sure this matches your route
+      { search },
+      {
+        preserveState: true,
+        replace: true,
+      }
+    );
+  }, 400);
+
+  return () => clearTimeout(delay);
+}, [search]);
 
 const [deleteId, setDeleteId] = useState(null);
 const [deleting, setDeleting] = useState(false);
@@ -191,6 +209,18 @@ const handleDelete = () => {
             <Plus className="w-4 h-4" /> Add Item
           </Button>
         </div>
+        {/* SEARCH BAR */}
+        <div className="flex items-center justify-between">
+          <div className="w-full md:w-1/3">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search items..."
+              className="w-full border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+        </div>
 
         {/* Table Card */}
         <Card className="shadow-sm border">
@@ -198,9 +228,53 @@ const handleDelete = () => {
             <CardTitle>Item List</CardTitle>
           </CardHeader>
 
-          <CardContent>
-            <DataTable columns={columns} data={items} />
-          </CardContent>
+<CardContent>
+  <p className="text-sm text-gray-500 mb-2">
+    Showing {items.data.length} of {items.total} items
+  </p>
+
+  <DataTable columns={columns} data={items.data} />
+
+  {/* Pagination */}
+  <div className="flex justify-center space-x-2 mt-4">
+    {/* Previous button */}
+    <Button
+      disabled={!items.prev_page_url}
+      onClick={() =>
+        items.prev_page_url &&
+        router.get(items.prev_page_url, {}, { preserveState: true })
+      }
+      className="px-3 py-1"
+    >
+      Previous
+    </Button>
+
+    {/* Page numbers */}
+    {Array.from({ length: items.last_page }, (_, i) => i + 1).map((page) => (
+      <Button
+        key={page}
+        onClick={() =>
+          router.get(route('admin.inventory'), { page, search }, { preserveState: true })
+        }
+        className={`px-3 py-1 ${items.current_page === page ? 'bg-blue-500 text-white' : ''}`}
+      >
+        {page}
+      </Button>
+    ))}
+
+    {/* Next button */}
+    <Button
+      disabled={!items.next_page_url}
+      onClick={() =>
+        items.next_page_url &&
+        router.get(items.next_page_url, {}, { preserveState: true })
+      }
+      className="px-3 py-1"
+    >
+      Next
+    </Button>
+  </div>
+</CardContent>
         </Card>
       </div>
 

@@ -10,15 +10,40 @@ use Spatie\Permission\Models\Role;
 
 class UsersController extends Controller
 {
-    public function view_users()
-    {
-        $roles = Role::all()->pluck('name');
-        $users = User::all();
-        return inertia('Admin/Users', [
-            'users' => $users,
-            'roles' => $roles
-        ]);
-    }
+public function view_users(Request $request)
+{
+    $search = $request->search;
+    $role = $request->role;
+
+    // Get all roles
+    $roles = Role::all()->pluck('name');
+
+    $users = User::when($search, function ($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                  ->orWhere('lastname', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('username', 'like', "%{$search}%")
+                  ->orWhere('office', 'like', "%{$search}%");
+            });
+        })
+        ->when($role, function ($query) use ($role) {
+            // Use Spatie's role relationship
+            $query->role($role); // this automatically filters users with the given role
+        })
+        ->orderBy('firstname')
+        ->paginate(10)
+        ->withQueryString();
+
+    return inertia('Admin/Users', [
+        'users' => $users,
+        'roles' => $roles,
+        'filters' => [
+            'search' => $search,
+            'role' => $role,
+        ],
+    ]);
+}
 
 public function addUser(Request $request)
 {

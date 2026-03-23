@@ -115,8 +115,16 @@ const approveRequest = () => {
                     <p className="font-medium text-gray-900">{ri.item.description}</p>
                     <p className="text-sm text-gray-500 mt-1">
                       Stock:{" "}
-                      <span className={`font-semibold px-2 py-1 rounded-full ${stock > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                        {stock}
+                      <span
+                        className={`font-semibold px-2 py-1 rounded-full ${
+                          stock === 0
+                            ? "bg-red-100 text-red-700"
+                            : stock <= 5
+                            ? "bg-yellow-100 text-yellow-700"
+                            : "bg-green-100 text-green-700"
+                        }`}
+                      >
+                        {stock === 0 ? "Out of Stock" : stock <= 5 ? `Low Stock (${stock})` : stock}
                       </span>
                     </p>
                   </div>

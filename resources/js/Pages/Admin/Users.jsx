@@ -1,6 +1,6 @@
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router } from "@inertiajs/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { DataTable } from "@/components/DataTable";
 import { columns } from "@/components/user-columns";
@@ -33,7 +33,21 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 
-export default function Users({ users, roles }) {
+export default function Users({ users, roles, filters }) {
+    const [search, setSearch] = useState(filters?.search || "");
+  const [role, setRole] = useState(filters?.role || "");
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      router.get(
+        route("admin.view_users"),
+        { search, role },
+        { preserveState: true, replace: true }
+      );
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search, role]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
   firstName: "",
@@ -147,6 +161,27 @@ const handleDelete = () => {
             <Plus className="w-4 h-4" /> Add User
           </Button>
         </div>
+        {/* Search & Filter */}
+        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-4">
+          <Input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search users..."
+            className="w-full md:w-1/3"
+          />
+
+          <select
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            className="w-full md:w-1/4 border rounded-md px-3 py-2"
+          >
+            <option value="">All Roles</option>
+            {roles.map((r) => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Table Card */}
         <Card className="shadow-sm border">
@@ -155,10 +190,40 @@ const handleDelete = () => {
           </CardHeader>
 
           <CardContent>
-            <DataTable
-  columns={columns(handleEdit, confirmDelete)} // ✅ FIXED
-  data={users}
-/>
+            <p className="text-sm text-gray-500 mb-2">
+              Showing {users.data.length} of {users.total} users
+            </p>
+
+            <DataTable columns={columns(handleEdit, confirmDelete)} data={users.data} />
+
+            {/* Pagination */}
+            <div className="flex justify-center space-x-2 mt-4">
+              <Button
+                disabled={!users.prev_page_url}
+                onClick={() => users.prev_page_url && router.get(users.prev_page_url, {}, { preserveState: true })}
+              >
+                Previous
+              </Button>
+
+              {Array.from({ length: users.last_page }, (_, i) => i + 1).map((page) => (
+                <Button
+                  key={page}
+                  onClick={() =>
+                    router.get(route("admin.view_users"), { page, search, role }, { preserveState: true })
+                  }
+                  className={`px-3 py-1 ${users.current_page === page ? "bg-blue-500 text-white" : ""}`}
+                >
+                  {page}
+                </Button>
+              ))}
+
+              <Button
+                disabled={!users.next_page_url}
+                onClick={() => users.next_page_url && router.get(users.next_page_url, {}, { preserveState: true })}
+              >
+                Next
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>

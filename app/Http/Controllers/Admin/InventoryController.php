@@ -8,19 +8,34 @@ use Illuminate\Http\Request;
 use App\Models\RequestItems as UserRequest;
 use App\Models\Requests;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
 class InventoryController extends Controller
 {
-    public function items()
-    {
+public function items(Request $request)
+{
+    $search = $request->search;
 
-        $items = Items::all();
+    $items = Items::when($search, function ($query) use ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('description', 'like', "%{$search}%")
+              ->orWhere('unit', 'like', "%{$search}%")
+              ->orWhere('id', 'like', "%{$search}%");
+        });
+    })
+    ->orderBy('created_at', 'asc')
+    ->paginate(10) // <-- number of items per page
+    ->withQueryString(); // <-- preserves search/filter query
 
-        return inertia('Admin/Inventory', [
-            'items' => $items,
-        ]);
-    }
+    return inertia('Admin/Inventory', [
+        'items' => $items,
+        'filters' => [
+            'search' => $search,
+        ],
+    ]);
+}
 
 public function addItem(Request $request)
 {
@@ -65,7 +80,7 @@ public function restock(Request $request)
 
     if ($item->stock_quantity == 0) {
         $item->status = 'out_of_stock';
-    } elseif ($item->stock_quantity < 5) {
+    } elseif ($item->stock_quantity <= 5) {
         $item->status = 'low_stock';
     } else {
         $item->status = 'in_stock';
@@ -116,50 +131,70 @@ public function showRequest(Requests $request)
 
 public function approve(Request $req, Requests $request)
 {
-    // ✅ Prevent double approval
     if ($request->status !== 'pending') {
         return redirect()->route('admin.requests')
             ->withErrors(['error' => 'This request has already been processed.']);
     }
 
-    // Loop through each requested item
-    foreach ($request->items as $item) {
-        $issuedQty = (int) ($req->items[(string) $item->id] ?? 0);
-        $stock = $item->item->stock_quantity;
+    DB::beginTransaction();
 
-        if ($issuedQty > $stock) {
-            return back()->withErrors([
-                'error' => 'Not enough stock for ' . $item->item->description
+    try {
+        foreach ($request->items as $item) {
+            $issuedQty = (int) ($req->items[(string) $item->id] ?? 0);
+            $inventoryItem = $item->item;
+
+            $stock = $inventoryItem->stock_quantity;
+
+            if ($issuedQty > $stock) {
+                throw new \Exception('Not enough stock for ' . $inventoryItem->description);
+            }
+
+            if ($issuedQty > 0) {
+                // ✅ Deduct stock
+                $inventoryItem->stock_quantity -= $issuedQty;
+
+                // ✅ Update status
+                if ($inventoryItem->stock_quantity == 0) {
+                    $inventoryItem->status = 'out_of_stock';
+                } elseif ($inventoryItem->stock_quantity <= 5) {
+                    $inventoryItem->status = 'low_stock';
+                } else {
+                    $inventoryItem->status = 'in_stock';
+                }
+
+                $inventoryItem->save();
+            }
+
+            // ✅ Save issued qty
+            $item->update([
+                'issued_quantity' => $issuedQty
             ]);
         }
 
-        if ($issuedQty > 0) {
-            $item->item->decrement('stock_quantity', $issuedQty);
+        $request->update([
+            'status' => 'processed',
+            'processed_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        if (!$request->ris) {
+            \App\Models\RIS::create([
+                'request_id' => $request->id,
+                'ris_number' => 'RIS-' . now()->format('Ymd') . '-' . $request->id,
+                'issued_by' => Auth::id(),
+                'requested_by' => $request->user_id,
+                'received_by' => null,
+            ]);
         }
 
-        $item->update(['issued_quantity' => $issuedQty]);
+        DB::commit();
+
+        return back()->with('success', 'Request approved successfully.');
+
+    } catch (\Exception $e) {
+        DB::rollback();
+        return back()->withErrors(['error' => $e->getMessage()]);
     }
-
-    // ✅ Update request status to processed/approved
-    $request->update([
-        'status' => 'processed',
-        'processed_by' => auth()->id(),
-        'approved_at' => now(),
-    ]);
-
-    // ✅ Create RIS if it doesn't exist
-    if (!$request->ris) {
-        $ris = \App\Models\RIS::create([
-            'request_id' => $request->id,
-            'ris_number' => 'RIS-' . now()->format('Ymd') . '-' . $request->id,
-            'issued_by' => auth()->id(),
-            'requested_by' => $request->user_id,
-            'received_by' => null, // you can fill later
-        ]);
-    }
-
-    // ✅ Redirect to print PDF immediately
-    return back()->with('success', 'Request approved successfully.');
 }
 
 public function printRis(Requests $request)
