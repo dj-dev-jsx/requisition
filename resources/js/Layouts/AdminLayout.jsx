@@ -52,7 +52,7 @@ export default function AdminLayout({ children }) {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // poll every 30s
+    const interval = setInterval(fetchNotifications, 15000); // poll every 15s
     return () => clearInterval(interval);
   }, []);
 

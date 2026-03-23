@@ -42,7 +42,7 @@ public function requests(Request $request)
     ->when(!$from && $to, function ($query) use ($to) {
         $query->whereDate('created_at', '<=', $to);
     })
-    ->orderBy('created_at', 'asc')
+    ->orderBy('created_at', 'desc')
     ->paginate(10)  // <-- paginate instead of get
     ->withQueryString(); // <-- preserve filters in pagination links
 
