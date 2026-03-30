@@ -12,17 +12,17 @@ export default function Requests() {
   const { requests, filters } = usePage().props;
 
 const [search, setSearch] = useState(filters?.search || "");
-const [from, setFrom] = useState(filters?.from || "");
-const [to, setTo] = useState(filters?.to || "");
 
+const [month, setMonth] = useState("");
+const [year, setYear] = useState("");
 useEffect(() => {
   const delay = setTimeout(() => {
     router.get(
       route("admin.requests"),
       {
         search,
-        from,
-        to,
+        month,
+        year,
       },
       {
         preserveState: true,
@@ -32,7 +32,7 @@ useEffect(() => {
   }, 400);
 
   return () => clearTimeout(delay);
-}, [search, from, to]);
+}, [search, month, year]);
 
   const statusColor = {
     pending: "bg-yellow-100 text-yellow-700",
@@ -103,6 +103,22 @@ useEffect(() => {
               Manage and view all user requests.
             </p>
           </div>
+          <div>
+          {/* MONTH */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-1  py-5 bg-green-200 text-gray-800 hover:bg-green-300 shadow rounded-xl"
+              onClick={() => {
+                window.location.href = route('ris.export', {
+                  month,
+                  year
+                });
+              }}
+            >
+              <Printer className="w-4 h-4" /> Export RIS
+            </Button>
+          </div>
         </div>
 
 <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
@@ -115,22 +131,31 @@ useEffect(() => {
     placeholder="Search requests..."
     className="w-full md:w-1/3 border rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
   />
+   <div className="flex items-center gap-3">
+        <select
+            value={month}
+            onChange={(e) => setMonth(e.target.value)}
+            className="border rounded-xl px-7 py-2 text-sm"
+          >
+            <option value="">All Months</option>
+            {[...Array(12)].map((_, i) => (
+              <option key={i+1} value={i+1}>
+                {new Date(0, i).toLocaleString('default', { month: 'long' })}
+              </option>
+            ))}
+          </select>
 
-  {/* DATE FILTERS */}
-  <div className="flex gap-2 w-full md:w-auto">
-    <input
-      type="date"
-      value={from}
-      onChange={(e) => setFrom(e.target.value)}
-      className="w-full border rounded-xl px-3 py-2 text-sm"
-    />
-
-    <input
-      type="date"
-      value={to}
-      onChange={(e) => setTo(e.target.value)}
-      className="w-full border rounded-xl px-3 py-2 text-sm"
-    />
+          {/* YEAR */}
+          <select
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            className="border rounded-xl px-7 py-2 text-sm"
+          >
+            <option value="">All Years</option>
+            {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+              <option key={y} value={y}>{y}</option>
+            ))}
+          </select>
   </div>
 </div>
 
@@ -166,7 +191,7 @@ useEffect(() => {
       <Button
         key={page}
         onClick={() =>
-          router.get(route('admin.requests'), { page, search, from, to }, { preserveState: true })
+          router.get(route('admin.requests'), { page, search, month, year }, { preserveState: true })
         }
         className={`px-3 py-1 ${requests.current_page === page ? 'bg-blue-500 text-white' : ''}`}
       >

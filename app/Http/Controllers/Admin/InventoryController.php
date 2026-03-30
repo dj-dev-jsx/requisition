@@ -128,7 +128,6 @@ public function showRequest(Requests $request)
         'request' => $request,
     ]);
 }
-
 public function approve(Request $req, Requests $request)
 {
     if ($request->status !== 'pending') {
@@ -171,16 +170,39 @@ public function approve(Request $req, Requests $request)
             ]);
         }
 
+        // ✅ Update request
         $request->update([
             'status' => 'processed',
             'processed_by' => Auth::id(),
             'approved_at' => now(),
         ]);
 
+        // ✅ Generate RIS Number (YY-MM-###)
         if (!$request->ris) {
+
+            $year = now()->format('y');   // 25
+            $month = now()->format('m');  // 01
+            $prefix = "{$year}-{$month}-";
+
+            // Get latest RIS this month
+            $latestRIS = \App\Models\RIS::where('ris_number', 'like', "{$prefix}%")
+                ->lockForUpdate() // 🔥 prevents duplicate in concurrent requests
+                ->orderBy('ris_number', 'desc')
+                ->first();
+
+            if ($latestRIS) {
+                $lastNumber = (int) substr($latestRIS->ris_number, -3);
+                $nextNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
+            } else {
+                $nextNumber = '001';
+            }
+
+            $risNumber = $prefix . $nextNumber;
+
+            // ✅ Create RIS
             \App\Models\RIS::create([
                 'request_id' => $request->id,
-                'ris_number' => 'RIS-' . now()->format('Ymd') . '-' . $request->id,
+                'ris_number' => $risNumber,
                 'issued_by' => Auth::id(),
                 'requested_by' => $request->user_id,
                 'received_by' => null,
@@ -208,12 +230,12 @@ public function printRis(Requests $request)
     if (!file_exists($logo)) $logo = null;
 
     $risNumber = $ris->ris_number ?? 'N/A';
-
     $pdf = Pdf::loadView('admin.requests.pdf', [
         'ris' => $ris,
         'request' => $request,
         'items' => $items,
         'logo' => $logo,
+        'risNumber' => $risNumber,
     ])->setPaper('a4', 'portrait');
 
     return $pdf->stream("RIS-{$risNumber}.pdf");

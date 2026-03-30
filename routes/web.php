@@ -10,6 +10,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Request;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -56,6 +57,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/requests/{request}/approve', [InventoryController::class, 'approve'])->name('admin.requests.approve');
     Route::get('/requests/{request}/print', [InventoryController::class, 'printRis'])->name('admin.requests.print');
     
+    Route::get('/ris/export', [RequestsController::class, 'exportRIS'])->name('ris.export');
 
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');

@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\RISExport;
 use App\Http\Controllers\Controller;
 use App\Models\Requests;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Excel;
+use Maatwebsite\Excel\Facades\Excel as FacadesExcel;
 
 class RequestsController extends Controller
 {
 public function requests(Request $request)
 {
     $search = $request->search;
-    $from = $request->from;
-    $to = $request->to;
+    $month = $request->month;
+    $year = $request->year;
 
     $requests = Requests::with([
         'user',
@@ -30,17 +33,11 @@ public function requests(Request $request)
                     ->orWhere('lastname', 'like', "%{$search}%");
               });
     })
-    ->when($from && $to, function ($query) use ($from, $to) {
-        $query->whereBetween('created_at', [
-            $from . ' 00:00:00',
-            $to . ' 23:59:59'
-        ]);
+    ->when($month, function ($query) use ($month) {
+    $query->whereMonth('created_at', $month);
     })
-    ->when($from && !$to, function ($query) use ($from) {
-        $query->whereDate('created_at', '>=', $from);
-    })
-    ->when(!$from && $to, function ($query) use ($to) {
-        $query->whereDate('created_at', '<=', $to);
+    ->when($year, function ($query) use ($year) {
+        $query->whereYear('created_at', $year);
     })
     ->orderBy('created_at', 'desc')
     ->paginate(10)  // <-- paginate instead of get
@@ -50,9 +47,26 @@ public function requests(Request $request)
         'requests' => $requests,
         'filters' => [
             'search' => $search,
-            'from' => $from,
-            'to' => $to,
+            'month' => $month,
+            'year' => $year,
         ]
     ]);
 }
+
+public function exportRIS(Request $request)
+{
+    // ✅ fallback to current month/year if empty
+    $month = $request->month ?: date('n'); // 1–12
+    $year  = $request->year ?: date('Y');
+
+    // ✅ CAPS filename
+    $monthName = strtoupper(date("F", mktime(0, 0, 0, (int)$month, 1)));
+    $fileName = "RSMI_{$monthName}_{$year}.xlsx";
+
+    return FacadesExcel::download(
+        new RISExport($month, $year),
+        $fileName
+    );
+}
+
 }

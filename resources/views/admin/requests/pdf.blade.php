@@ -54,7 +54,7 @@
                 Office: <span class="underline font-semibold">{{ $requestedByPosition }}</span>
             </td>
             <td colspan="4" style="border-top:none;border-bottom:none;">
-                RIS No.: <span class="underline font-semibold"></span>
+                RIS No.: <span class="underline font-semibold">{{ $risNumber }}</span>
             </td>
         </tr>
         <tr class="with-border text-center font-semibold" style="font-size:14px;">
@@ -96,7 +96,7 @@
 
         <tr class="with-border">
             <td colspan="8" style="font-size:14px;">
-                Purpose: <span style="font-size:12px;"></span>
+                Purpose: <span style="font-size:12px;">{{ $ris->request->purpose ?? '' }}</span>
             </td>
         </tr>
     </table>
