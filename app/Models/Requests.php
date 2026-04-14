@@ -14,6 +14,9 @@ class Requests extends Model
         'processed_by',
         'approved_at',
     ];
+    protected $casts = [
+        'approved_at' => 'datetime',
+    ];
 
     public function items()
     {

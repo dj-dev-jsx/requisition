@@ -225,14 +225,14 @@ public function printRis(Requests $request)
     $ris = $request->ris()->with(['issuedBy', 'requestedBy', 'receivedBy'])->first();
     // Fetch the request items (these belong to Requests)
     $items = $request->items()->with('item')->get();
-
     $logo = public_path('logo.png');
     if (!file_exists($logo)) $logo = null;
-
+    $approvedAt = $request->approved_at ?? null;
     $risNumber = $ris->ris_number ?? 'N/A';
     $pdf = Pdf::loadView('admin.requests.pdf', [
         'ris' => $ris,
         'request' => $request,
+        'approvedAt' => $approvedAt,
         'items' => $items,
         'logo' => $logo,
         'risNumber' => $risNumber,

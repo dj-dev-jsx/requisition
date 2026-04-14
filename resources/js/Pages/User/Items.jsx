@@ -22,12 +22,38 @@ export default function Items({ items, filters }) {
   const [purpose, setPurpose] = useState("");
   const [search, setSearch] = useState(filters.search || "");
 
-  const addItem = (item) => {
-    setSelectedItems((prev) => {
-      if (prev.find((i) => i.id === item.id)) return prev;
-      return [...prev, item];
-    });
-  };
+const addItem = (item) => {
+  setSelectedItems((prev) => {
+    if (prev.find((i) => i.id === item.id)) return prev;
+
+    return [...prev, { ...item, quantity: 1 }]; // ✅ add quantity
+  });
+};
+
+const updateQuantity = (id, qty, maxStock) => {
+  qty = Number(qty);
+
+  if (isNaN(qty) || qty < 1) qty = 1;
+  if (qty > maxStock) qty = maxStock;
+
+  setSelectedItems((prev) =>
+    prev.map((item) =>
+      item.id === id ? { ...item, quantity: qty } : item
+    )
+  );
+};
+
+const increaseQty = (item) => {
+  if (item.quantity < item.stock_quantity) {
+    updateQuantity(item.id, item.quantity + 1, item.stock_quantity);
+  }
+};
+
+const decreaseQty = (item) => {
+  if (item.quantity > 1) {
+    updateQuantity(item.id, item.quantity - 1, item.stock_quantity);
+  }
+};
 
   const removeItem = (id) => {
     setSelectedItems((prev) => prev.filter((i) => i.id !== id));
@@ -49,7 +75,7 @@ const submitRequest = () => {
       purpose,
       items: selectedItems.map((item) => ({
         item_id: item.id,
-        quantity: 1,
+        quantity: item.quantity,
       })),
     },
     {
@@ -158,6 +184,7 @@ return (
           className="h-full object-contain group-hover:scale-105 transition"
         />
       </div>
+      
 
       <div className="p-3 space-y-1">
         <h3 className="text-sm font-semibold text-gray-800 line-clamp-2">
@@ -199,77 +226,101 @@ return (
 })}
         </div>
 
-        {/* DESKTOP SUMMARY */}
-        <div className="hidden lg:block lg:col-span-4">
-          <div className="bg-white border rounded-2xl shadow-sm p-5 sticky top-6">
-            <h2 className="text-lg font-semibold mb-4">
-              Request Summary
-            </h2>
+{/* DESKTOP SUMMARY */}
+<div className="hidden lg:block lg:col-span-4">
+  <div className="bg-white border rounded-2xl shadow-sm p-5 sticky top-6">
+    <h2 className="text-lg font-semibold mb-4">
+      Request Summary
+    </h2>
 
-            {selectedItems.length === 0 && (
-              <p className="text-sm text-gray-500 text-center py-10">
-                No items selected
-              </p>
-            )}
+    {selectedItems.length === 0 && (
+      <p className="text-sm text-gray-500 text-center py-10">
+        No items selected
+      </p>
+    )}
 
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-              {selectedItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 border rounded-lg p-2"
-                >
-                  <img
-                    src={getImageUrl(item.image)}
-                    className="h-12 w-12 object-contain rounded-md border"
-                  />
+    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+      
+      {/* ✅ FIX: wrap in map */}
+      {selectedItems.map((item) => (
+        <div
+          key={item.id}
+          className="flex items-center gap-3 border rounded-lg p-2"
+        >
+          <img
+            src={getImageUrl(item.image)}
+            className="h-12 w-12 object-contain rounded-md border"
+          />
 
-                  <div className="flex-1">
-                    <p className="text-sm font-medium line-clamp-1">
-                      {item.description}
-                    </p>
-                    {(() => {
-                      const stockStatus = getStockStatus(item.stock_quantity);
-                      return (
-                        <p className="text-xs">
-                          <span className="text-gray-500">Stock:</span>{" "}
-                          <span className="font-medium">{item.stock_quantity}</span>{" "}
-                          <span className={`ml-1 px-2 py-[2px] rounded-full text-[10px] ${stockStatus.color}`}>
-                            {stockStatus.label}
-                          </span>
-                        </p>
-                      );
-                    })()}
-                  </div>
+          <div className="flex-1">
+            <p className="text-sm font-medium line-clamp-1">
+              {item.description}
+            </p>
 
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    className="text-xs text-red-500"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-
-              {/* PURPOSE */}
-              <textarea
-                value={purpose}
-                onChange={(e) => setPurpose(e.target.value)}
-                placeholder="Purpose..."
-                className="w-full mt-3 border rounded-lg p-2 text-sm"
-                rows={3}
-              />
-            </div>
-
-            {selectedItems.length > 0 && (
+            {/* QUANTITY CONTROLS */}
+            <div className="flex items-center gap-2 mt-2">
               <button
-                onClick={submitRequest}
-                className="w-full mt-4 bg-green-600 text-white py-2.5 rounded-lg"
+                onClick={() => decreaseQty(item)}
+                className="px-2 py-1 bg-gray-200 rounded"
               >
-                Submit ({selectedItems.length})
+                -
               </button>
-            )}
+
+              <input
+                type="number"
+                min="1"
+                max={item.stock_quantity}
+                value={item.quantity}
+                onChange={(e) =>
+                  updateQuantity(item.id, e.target.value, item.stock_quantity)
+                }
+                className="w-14 text-center border rounded-md py-1 text-sm"
+              />
+
+              <button
+                onClick={() => increaseQty(item)}
+                className="px-2 py-1 bg-gray-200 rounded"
+              >
+                +
+              </button>
+
+              <span className="text-xs text-gray-500">
+                {item.unit}
+              </span>
+            </div>
           </div>
+
+          <button
+            onClick={() => removeItem(item.id)}
+            className="text-xs text-red-500"
+          >
+            Remove
+          </button>
         </div>
+      ))}
+
+      {/* PURPOSE */}
+      <textarea
+        value={purpose}
+        onChange={(e) => setPurpose(e.target.value)}
+        placeholder="Purpose..."
+        className="w-full mt-3 border rounded-lg p-2 text-sm"
+        rows={3}
+      />
+    </div>
+
+    {selectedItems.length > 0 && (
+      <button
+        onClick={submitRequest}
+        className="w-full mt-4 bg-green-600 text-white py-2.5 rounded-lg"
+      >
+        Submit (
+        {selectedItems.reduce((total, item) => total + item.quantity, 0)}
+        )
+      </button>
+    )}
+  </div>
+</div>
       </div>
 
       {/* ✅ MOBILE FLOATING SUMMARY */}
@@ -278,7 +329,7 @@ return (
           
           <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-medium">
-              {selectedItems.length} item(s) selected
+              {selectedItems.reduce((total, item) => total + item.quantity, 0)} item(s) selected
             </p>
           </div>
 
@@ -303,7 +354,9 @@ return (
                   Confirm Request
                 </AlertDialogTitle>
                 <AlertDialogDescription>
-                  Submit {selectedItems.length} item(s)?
+                  Submit (
+                      {selectedItems.reduce((total, item) => total + item.quantity, 0)}
+                    )
                   <br />
                   <strong>Purpose:</strong> {purpose || "N/A"}
                 </AlertDialogDescription>

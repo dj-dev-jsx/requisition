@@ -25,9 +25,11 @@
 <body>
 
 @for($copy=0; $copy<2; $copy++)
-
+    <div style="position:absolute; top:10px; right:20px; font-size:10px; font-weight: 50;">
+    Appendix 63
+</div>
     <div class="text-center font-bold" style="font-size:16px; margin:30px 0;">
-        Requisition and Issue Slip
+        REQUISITION AND ISSUE SLIP
     </div>
 
     @php
@@ -39,6 +41,17 @@
         $receivedByPosition = $ris->receivedBy->office ?? '';
         $purpose = $ris->purpose ?? 'Purpose is not specified';
     @endphp
+        {{-- Top Info --}}
+    <table>
+        <tr>
+            <td colspan="4" class="font-semibold">
+                Entity Name: <span class="underline">DIVISION OF THE CITY OF ILAGAN</span>
+            </td>
+            <td colspan="4" class="font-semibold">
+                Fund Cluster: <span class="underline">______________________________________</span>
+            </td>
+        </tr>
+    </table>
 
     <table>
         <tr class="with-border">
@@ -59,7 +72,7 @@
         </tr>
         <tr class="with-border text-center font-semibold" style="font-size:14px;">
             <td colspan="4">Requisition</td>
-            <td colspan="4">Issuance</td>
+            <td colspan="4">Issue</td>
         </tr>
         <tr class="with-border text-center font-bold">
             <td style="width:8%;">Stock No.</td>
@@ -85,7 +98,7 @@
                 <td></td>
                 <td>{{ $unit }}</td>
                 <td class="text-left" style="padding-left:8px;">{{ $description }}</td>
-                <td>{{ $quantityIssued }}</td>
+                <td>{{ $quantityRequested }}</td>
                 <td></td>
                 <td></td>
                 <td>{{ $quantityIssued }}</td>
@@ -133,9 +146,9 @@
         <tr>
             <td class="text-left">Date :</td>
             <td>{{ optional($ris->created_at)->format('Y-m-d') ?? '' }}</td>
-            <td></td>
-            <td></td>
-            <td></td>
+            <td>{{ optional($approvedAt)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->updated_at)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->updated_at)->format('Y-m-d') ?? '' }}</td>
         </tr>
     </table>
 

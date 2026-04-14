@@ -106,46 +106,65 @@ const approveRequest = () => {
               const issued = quantities[ri.id];
 
               return (
-                <div
-                  key={ri.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white"
-                >
-                  {/* Item Info */}
-                  <div>
-                    <p className="font-medium text-gray-900">{ri.item.description}</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      Stock:{" "}
-                      <span
-                        className={`font-semibold px-2 py-1 rounded-full ${
-                          stock === 0
-                            ? "bg-red-100 text-red-700"
-                            : stock <= 5
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-green-100 text-green-700"
-                        }`}
-                      >
-                        {stock === 0 ? "Out of Stock" : stock <= 5 ? `Low Stock (${stock})` : stock}
-                      </span>
-                    </p>
-                  </div>
+<div
+  key={ri.id}
+  className="grid grid-cols-3 items-center p-4 border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white"
+>
+  {/* LEFT: Item Info */}
+  <div>
+    <p className="font-medium text-gray-900">
+      {ri.item.description}
+    </p>
+    <p className="text-xs text-gray-500 mt-1">
+      Stock:{" "}
+      <span
+        className={`font-semibold px-2 py-1 rounded-full ${
+          stock === 0
+            ? "bg-red-100 text-red-700"
+            : stock <= 5
+            ? "bg-yellow-100 text-yellow-700"
+            : "bg-green-100 text-green-700"
+        }`}
+      >
+        {stock === 0
+          ? "Out of Stock"
+          : stock <= 5
+          ? `Low Stock (${stock})`
+          : stock}
+      </span>
+    </p>
+  </div>
 
-                  {/* Issue Input */}
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-500">Issue:</span>
-                    {request.status === "pending" ? (
-                      <input
-                        type="number"
-                        min="0"
-                        max={stock}
-                        value={issued}
-                        onChange={e => handleChange(ri.id, e.target.value, stock)}
-                        className="w-24 text-center border rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 shadow-sm"
-                      />
-                    ) : (
-                      <span className="font-semibold text-gray-900">{issued}</span>
-                    )}
-                  </div>
-                </div>
+  {/* ✅ MIDDLE: Requested Quantity */}
+  <div className="text-center">
+    <p className="text-xs text-gray-500">Requested</p>
+    <p className="text-lg font-bold text-blue-600">
+      {ri.quantity}
+    </p>
+  </div>
+
+  {/* RIGHT: Issue Input */}
+  <div className="flex justify-end items-center gap-3">
+    <span className="text-sm text-gray-500">Issue:</span>
+
+    {request.status === "pending" ? (
+      <input
+        type="number"
+        min="0"
+        max={stock}
+        value={issued}
+        onChange={(e) =>
+          handleChange(ri.id, e.target.value, stock)
+        }
+        className="w-24 text-center border rounded-md px-2 py-1 focus:ring-2 focus:ring-blue-500 shadow-sm"
+      />
+    ) : (
+      <span className="font-semibold text-gray-900">
+        {issued}
+      </span>
+    )}
+  </div>
+</div>
               );
             })}
           </CardContent>
