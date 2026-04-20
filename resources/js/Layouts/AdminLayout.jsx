@@ -81,10 +81,10 @@ export default function AdminLayout({ children }) {
             <ClipboardIcon className="w-5 h-5" />
             Requests
           </Link>
-          <Link href={route("admin.settings")} className={navLink("admin.settings")}>
+          {/* <Link href={route("admin.settings")} className={navLink("admin.settings")}>
             <Settings className="w-5 h-5" />
             Settings
-          </Link>
+          </Link> */}
           <Link
             href={route("logout")}
             method="post"
