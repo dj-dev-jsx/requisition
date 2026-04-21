@@ -126,6 +126,7 @@ public function map($row): array
         $quantity,
         '',
         '',
+         ($showRis ? ($ris->request->user->office ?? '') : ''),
     ];
 }
 
