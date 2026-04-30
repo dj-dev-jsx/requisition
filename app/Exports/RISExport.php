@@ -198,8 +198,6 @@ public function map($row): array
                 $sheet->getStyle("H{$startDataRow}:H{$highestRow}")
                     ->getNumberFormat()->setFormatCode('#,##0.00');
 
-                
-
                 // Borders: thin inside, medium outline (only until last data row, no totals)
                 $sheet->getStyle("A6:{$highestColumn}{$highestRow}")
                     ->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
