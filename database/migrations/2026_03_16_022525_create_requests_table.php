@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('requests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->restrictOnDelete();
-            $table->enum("status", ["processed", "pending"])->default("pending");
+            $table->enum("status", ["processed", "pending", "rejected"])->default("pending");
             $table->text("purpose")->nullable();
             $table->foreignId('processed_by')->nullable()->constrained('users')->restrictOnDelete();
             $table->dateTime("approved_at", $precision = 0)->nullable();

@@ -7,7 +7,7 @@ import { columns } from "@/components/user-columns";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search, Users as UsersIcon, AlertTriangle, Check, Save, Loader, XCircle, Pencil } from "lucide-react";
 
 import {
   Dialog,
@@ -143,258 +143,379 @@ const handleDelete = () => {
     <AdminLayout>
       <Head title="Users" />
 
-      <div className="p-6 space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-            <p className="text-muted-foreground text-sm">
-              Manage system users and their information.
-            </p>
+      <div className="min-h-screen bg-slate-50 p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* Premium Page Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-purple-700 rounded-lg flex items-center justify-center">
+                  <UsersIcon className="text-white w-6 h-6" />
+                </div>
+                <h1 className="text-4xl font-bold text-purple-700">
+                  User Management
+                </h1>
+              </div>
+              <p className="text-gray-500 text-base ml-15">
+                Create, manage, and organize system users and permissions
+              </p>
+            </div>
+
+            <Button
+              onClick={() => setOpen(true)}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl rounded-lg px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105"
+            >
+              <Plus className="w-5 h-5" /> Add New User
+            </Button>
           </div>
 
-          <Button
-            variant="outline"
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 bg-green-200 hover:bg-green-300 shadow-md rounded-md border-none"
-          >
-            <Plus className="w-4 h-4" /> Add User
-          </Button>
-        </div>
-        {/* Search & Filter */}
-        <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between mb-4">
-          <Input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search users..."
-            className="w-full md:w-1/3"
-          />
-
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="w-full md:w-1/4 border rounded-md px-3 py-2"
-          >
-            <option value="">All Roles</option>
-            {roles.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Table Card */}
-        <Card className="shadow-sm border">
-          <CardHeader>
-            <CardTitle>User List</CardTitle>
-          </CardHeader>
-
-          <CardContent>
-            <p className="text-sm text-gray-500 mb-2">
-              Showing {users.data.length} of {users.total} users
-            </p>
-
-            <DataTable columns={columns(handleEdit, confirmDelete)} data={users.data} />
-
-            {/* Pagination */}
-            <div className="flex justify-center space-x-2 mt-4">
-              <Button
-                disabled={!users.prev_page_url}
-                onClick={() => users.prev_page_url && router.get(users.prev_page_url, {}, { preserveState: true })}
-              >
-                Previous
-              </Button>
-
-              {Array.from({ length: users.last_page }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  onClick={() =>
-                    router.get(route("admin.view_users"), { page, search, role }, { preserveState: true })
-                  }
-                  className={`px-3 py-1 ${users.current_page === page ? "bg-blue-500 text-white" : ""}`}
-                >
-                  {page}
-                </Button>
-              ))}
-
-              <Button
-                disabled={!users.next_page_url}
-                onClick={() => users.next_page_url && router.get(users.next_page_url, {}, { preserveState: true })}
-              >
-                Next
-              </Button>
+          {/* Search & Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="relative">
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name, email, or username..."
+                className="w-full px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 placeholder-gray-400"
+              />
+              <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <Search className="w-5 h-5" />
+              </span>
             </div>
-          </CardContent>
-        </Card>
+
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 font-medium"
+            >
+              <option value="">All Roles</option>
+              {roles.map((r) => (
+                <option key={r} value={r}>{r}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Table Card with Premium Styling */}
+          <Card className="shadow-xl border-0 rounded-2xl overflow-hidden bg-white hover:shadow-2xl transition-shadow duration-300">
+            <CardHeader className="bg-slate-900 text-white rounded-t-2xl px-8 py-6">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-2xl font-bold">User List</CardTitle>
+                <span className="bg-white bg-opacity-20 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                  {users.total} total
+                </span>
+              </div>
+              <p className="text-gray-300 text-sm mt-2">
+                Displaying {users.data.length} of {users.total} users
+              </p>
+            </CardHeader>
+
+            <CardContent className="p-8">
+              <div className="overflow-x-auto">
+                <DataTable columns={columns(handleEdit, confirmDelete)} data={users.data} />
+              </div>
+
+              {/* Modern Pagination */}
+              <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                <div className="text-sm text-gray-600">
+                  Page <span className="font-bold text-gray-900">{users.current_page}</span> of{' '}
+                  <span className="font-bold text-gray-900">{users.last_page}</span>
+                </div>
+                <div className="flex justify-center items-center space-x-2">
+                  <Button
+                    disabled={!users.prev_page_url}
+                    onClick={() => users.prev_page_url && router.get(users.prev_page_url, {}, { preserveState: true })}
+                    className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  >
+                    ← Previous
+                  </Button>
+
+                  <div className="flex gap-1">
+                    {Array.from({ length: users.last_page }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        onClick={() =>
+                          router.get(route("admin.view_users"), { page, search, role }, { preserveState: true })
+                        }
+                        className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+                          users.current_page === page
+                            ? 'bg-purple-600 text-white shadow-lg'
+                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </Button>
+                    ))}
+                  </div>
+
+                  <Button
+                    disabled={!users.next_page_url}
+                    onClick={() => users.next_page_url && router.get(users.next_page_url, {}, { preserveState: true })}
+                    className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                  >
+                    Next →
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="sm:max-w-3xl w-full bg-white rounded-2xl shadow-2xl p-8 border-0">
+          <DialogHeader className="mb-6">
+            <DialogTitle className="text-2xl font-bold text-purple-700 flex items-center gap-2">
+              {form.id ? (
+                <>
+                  <Pencil className="w-6 h-6 text-purple-600" /> Edit User Details
+                </>
+              ) : (
+                <>
+                  <Plus className="w-6 h-6 text-purple-600" /> Add New User
+                </>
+              )}
+            </DialogTitle>
+          </DialogHeader>
 
-    <DialogContent className="sm:max-w-2xl w-full bg-white rounded-2xl shadow-xl p-6">
-      <DialogHeader>
-        <DialogTitle>{form.id ? "Edit User" : "Add User"}</DialogTitle>
-      </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* First Name & Last Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="firstName" className="text-base font-semibold text-gray-700 mb-2 block">
+                  First Name
+                </Label>
+                <Input
+                  id="firstName"
+                  name="firstName"
+                  value={form.firstName || ""}
+                  onChange={handleChange}
+                  placeholder="Enter first name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.firstName}
+                  </p>
+                )}
+              </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-        {/* First Name & Last Name */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="firstName">First Name</Label>
-            <Input
-              id="firstName"
-              name="firstName"
-              value={form.firstName || ""}
-              onChange={handleChange}
-              placeholder="Enter first name"
-              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-            />
-            {errors.firstName && <p className="text-red-600 text-sm mt-1">{errors.firstName}</p>}
+              <div>
+                <Label htmlFor="lastName" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Last Name
+                </Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={form.lastName || ""}
+                  onChange={handleChange}
+                  placeholder="Enter last name"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.lastName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Email */}
+            <div>
+              <Label htmlFor="email" className="text-base font-semibold text-gray-700 mb-2 block">
+                Email Address
+              </Label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                value={form.email || ""}
+                onChange={handleChange}
+                placeholder="Enter email address"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <AlertTriangle className="w-4 h-4" /> {errors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Username & Office */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="username" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Username
+                </Label>
+                <Input
+                  id="username"
+                  name="username"
+                  value={form.username || ""}
+                  onChange={handleChange}
+                  placeholder="Enter username"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.username && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.username}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="office" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Office
+                </Label>
+                <Input
+                  id="office"
+                  name="office"
+                  value={form.office || ""}
+                  onChange={handleChange}
+                  placeholder="Enter office location"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.office && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.office}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Password & Confirm Password */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="password" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  name="password"
+                  value={form.password || ""}
+                  onChange={handleChange}
+                  placeholder={form.id ? "Leave blank to keep current" : "Enter password"}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.password && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.password}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Label htmlFor="confirmPassword" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Confirm Password
+                </Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  name="password_confirmation"
+                  value={form.password_confirmation || ""}
+                  onChange={handleChange}
+                  placeholder="Confirm password"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.confirmPassword}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Role */}
+            <div>
+              <Label htmlFor="role" className="text-base font-semibold text-gray-700 mb-2 block">
+                User Role
+              </Label>
+              <select
+                id="role"
+                name="role"
+                value={form.role || ""}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm font-medium"
+              >
+                <option value="">Select a role</option>
+                {roles.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+              {errors.role && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <AlertTriangle className="w-4 h-4" /> {errors.role}
+                </p>
+              )}
+            </div>
+
+            <DialogFooter className="mt-8 pt-6 border-t border-gray-200 flex gap-3">
+              <Button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold transition-all duration-200"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="px-6 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+              >
+                {form.id ? (
+                  <>
+                    <Save className="w-4 h-4" /> Update User
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" /> Save User
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl shadow-2xl border-0">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-2xl font-bold text-red-600 flex items-center gap-2">
+              <XCircle className="w-6 h-6" /> Delete User
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600 text-base mt-2">
+              Are you sure you want to delete this user? This action is permanent and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
+            <p className="text-sm text-red-700 flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <span><span className="font-bold">Warning:</span> This user account will be permanently removed from the system.</span>
+            </p>
           </div>
 
-          <div>
-            <Label htmlFor="lastName">Last Name</Label>
-            <Input
-              id="lastName"
-              name="lastName"
-              value={form.lastName || ""}
-              onChange={handleChange}
-              placeholder="Enter last name"
-              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-            />
-            {errors.lastName && <p className="text-red-600 text-sm mt-1">{errors.lastName}</p>}
-          </div>
-        </div>
+          <AlertDialogFooter className="flex gap-3">
+            <AlertDialogCancel className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold transition-all duration-200">
+              Cancel
+            </AlertDialogCancel>
 
-        {/* Email */}
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            name="email"
-            value={form.email || ""}
-            onChange={handleChange}
-            placeholder="Enter email"
-            className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-          />
-          {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email}</p>}
-        </div>
-
-        {/* Username */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="username">Username</Label>
-            <Input
-              id="username"
-              name="username"
-              value={form.username || ""}
-              onChange={handleChange}
-              placeholder="Enter username"
-              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-            />
-            {errors.username && <p className="text-red-600 text-sm mt-1">{errors.username}</p>}
-          </div>
-        <div>
-          <Label htmlFor="office">Office</Label>
-          <Input
-            id="office"
-            name="office"
-            value={form.office || ""}
-            onChange={handleChange}
-            placeholder="Enter office"
-            className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-          />
-          {errors.office && <p className="text-red-600 text-sm mt-1">{errors.office}</p>}
-        </div>
-        </div>
-        {/* Password & Confirm Password */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              name="password"
-              value={form.password || ""}
-              onChange={handleChange}
-              placeholder="Enter password"
-              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-            />
-            {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password}</p>}
-          </div>
-
-          <div>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              name="password_confirmation" // <--- must match Laravel convention
-              value={form.password_confirmation || ""}
-              onChange={handleChange}
-              placeholder="Confirm password"
-              className="shadow-sm focus:ring-2 focus:ring-blue-500 mt-2"
-            />
-            {errors.confirmPassword && <p className="text-red-600 text-sm mt-1">{errors.confirmPassword}</p>}
-          </div>
-          <div>
-          <Label htmlFor="role">Role</Label>
-          <select
-            id="role"
-            name="role"
-            value={form.role || ""}
-            onChange={handleChange}
-            className="mt-2 w-full border rounded-md px-3 py-2 shadow-sm focus:ring-2 focus:ring-blue-500"
-          >
-            {roles.map((r) => (
-              <option key={r} value={r}>{r}</option>
-            ))}
-          </select>
-          {errors.role && <p className="text-red-600 text-sm mt-1">{errors.role}</p>}
-        </div>
-        </div>
-
-        {/* Division - commented out for now */}
-        {/*
-        <div>
-          <Label htmlFor="division">Division</Label>
-          <Input
-            id="division"
-            name="division"
-            value={form.division || ""}
-            onChange={handleChange}
-            placeholder="Enter division"
-            className="shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-          {errors.division && <p className="text-red-600 text-sm mt-1">{errors.division}</p>}
-        </div>
-        */}
-
-        <DialogFooter className="mt-4">
-          <Button type="submit" className="w-full sm:w-auto">
-            {form.id ? "Update" : "Save"}
-          </Button>
-        </DialogFooter>
-      </form>
-    </DialogContent>
-</Dialog>
-<AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-  <AlertDialogContent className="bg-white rounded-xl shadow-xl">
-    <AlertDialogHeader>
-      <AlertDialogTitle>Delete User?</AlertDialogTitle>
-      <AlertDialogDescription>
-        This action cannot be undone. This will permanently delete the user.
-      </AlertDialogDescription>
-    </AlertDialogHeader>
-
-    <AlertDialogFooter>
-      <AlertDialogCancel>Cancel</AlertDialogCancel>
-      <AlertDialogAction
-        onClick={handleDelete}
-        className="bg-red-600 hover:bg-red-700"
-      >
-        Yes, Delete
-      </AlertDialogAction>
-    </AlertDialogFooter>
-  </AlertDialogContent>
-</AlertDialog>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-6 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
+            >
+              {deleting ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-4 h-4" /> Yes, Delete
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }

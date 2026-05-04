@@ -26,7 +26,7 @@ const addItem = (item) => {
   setSelectedItems((prev) => {
     if (prev.find((i) => i.id === item.id)) return prev;
 
-    return [...prev, { ...item, quantity: 1 }]; // ✅ add quantity
+    return [...prev, { ...item, quantity: 1 }];
   });
 };
 
