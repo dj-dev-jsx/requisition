@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\ItemsImport;
 use App\Models\Items;
 use Illuminate\Http\Request;
 use App\Models\RequestItems as UserRequest;
@@ -11,6 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class InventoryController extends Controller
 {
@@ -241,5 +243,15 @@ public function printRis(Requests $request)
     return $pdf->stream("RIS-{$risNumber}.pdf");
 }
 
+public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,csv'
+    ]);
+
+    Excel::import(new ItemsImport, $request->file('file'));
+
+    return back()->with('success', 'Items uploaded successfully.');
+}
 
 }

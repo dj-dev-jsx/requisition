@@ -62,6 +62,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
+    Route::post('/admin/items/bulk-upload', [InventoryController::class, 'bulkUpload'])->name('admin.bulk_upload_items');
 });
 
 Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {

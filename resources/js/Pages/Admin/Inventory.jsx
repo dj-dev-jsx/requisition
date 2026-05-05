@@ -7,7 +7,7 @@ import { getInventoryColumns } from "@/components/inventory-columns";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Package, BarChart3, Scale, AlertTriangle, Check, Loader, Save, XCircle, Pencil } from "lucide-react";
+import { Plus, Search, Package, BarChart3, Scale, AlertTriangle, Check, Loader, Save, XCircle, Pencil, Upload } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -186,7 +186,9 @@ const handleDelete = () => {
 };
 
   const columns = getInventoryColumns(handleEdit, confirmDelete, handleRestock);
-
+const [bulkOpen, setBulkOpen] = useState(false);
+const [bulkFile, setBulkFile] = useState(null);
+const [uploading, setUploading] = useState(false);
   return (
     <AdminLayout>
       <Head title="Inventory" />
@@ -208,7 +210,12 @@ const handleDelete = () => {
                 Track, manage, and optimize your stock levels with ease
               </p>
             </div>
-
+          <Button
+            onClick={() => setBulkOpen(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-lg px-6 py-3 font-semibold"
+          >
+            <Upload className="w-5 h-5" /> Bulk Upload
+          </Button>
             <Button
               onClick={() => setOpen(true)}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl rounded-lg px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105"
@@ -548,6 +555,67 @@ const handleDelete = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
+  <DialogContent className="sm:max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">
+    <DialogHeader>
+      <DialogTitle className="text-xl font-bold text-indigo-700">
+        Bulk Upload Items
+      </DialogTitle>
+    </DialogHeader>
+
+    <div className="space-y-4">
+      <Input
+        type="file"
+        accept=".xlsx,.csv"
+        onChange={(e) => setBulkFile(e.target.files[0])}
+      />
+
+      <p className="text-sm text-gray-500">
+        Upload Excel file with columns: <b>description, stock_quantity, unit</b>
+      </p>
+
+      <a
+        href="/templates/inventory_template.xlsx"
+        className="text-blue-600 text-sm underline"
+      >
+        Download Template
+      </a>
+    </div>
+
+    <DialogFooter>
+      <Button onClick={() => setBulkOpen(false)} variant="outline">
+        Cancel
+      </Button>
+
+      <Button
+        onClick={() => {
+          if (!bulkFile) return toast.error("Please select a file");
+
+          const formData = new FormData();
+          formData.append("file", bulkFile);
+
+          setUploading(true);
+
+          router.post(route("admin.bulk_upload_items"), formData, {
+            onSuccess: () => {
+              toast.success("Items uploaded successfully!");
+              setBulkOpen(false);
+              setBulkFile(null);
+            },
+            onError: () => {
+              toast.error("Upload failed.");
+            },
+            onFinish: () => setUploading(false),
+          });
+        }}
+        disabled={uploading}
+      >
+        {uploading ? "Uploading..." : "Upload"}
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
     </AdminLayout>
   );
 }
