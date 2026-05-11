@@ -58,6 +58,7 @@ export default function Users({ users, roles, filters }) {
   password: "",
   password_confirmation: "",
   role: "",
+  admin_password: "",
   // division: "", // optional
 });
   const [errors, setErrors] = useState({});
@@ -84,6 +85,7 @@ const handleSubmit = (e) => {
         password: "",
         password_confirmation: "",
         role: "",
+        admin_password: "",
       });
       setErrors({});
 
@@ -447,6 +449,29 @@ const handleDelete = () => {
                 </p>
               )}
             </div>
+
+            {/* Admin Password - Only for adding new user */}
+            {!form.id && (
+              <div>
+                <Label htmlFor="admin_password" className="text-base font-semibold text-gray-700 mb-2 block">
+                  Admin Password
+                </Label>
+                <Input
+                  id="admin_password"
+                  type="password"
+                  name="admin_password"
+                  value={form.admin_password || ""}
+                  onChange={handleChange}
+                  placeholder="Enter your admin password to confirm"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+                />
+                {errors.admin_password && (
+                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertTriangle className="w-4 h-4" /> {errors.admin_password}
+                  </p>
+                )}
+              </div>
+            )}
 
             <DialogFooter className="mt-8 pt-6 border-t border-gray-200 flex gap-3">
               <Button

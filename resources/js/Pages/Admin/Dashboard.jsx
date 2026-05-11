@@ -1,6 +1,7 @@
 
 import AdminLayout from "@/Layouts/AdminLayout";
-import { Head, usePage } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -32,7 +33,27 @@ import {
 } from "recharts";
 
 export default function Dashboard() {
-  const { dashboard } = usePage().props;
+  const { dashboard, filters, request_statuses, item_statuses, date_ranges } = usePage().props;
+  const [activeFilters, setActiveFilters] = useState({
+    date_range: filters?.date_range ?? 7,
+    request_status: filters?.request_status ?? "all",
+    item_status: filters?.item_status ?? "all",
+  });
+
+  const dateRangeOptions = date_ranges || [7, 14, 30];
+  const requestStatusOptions = request_statuses || ["all", "pending", "processed", "rejected"];
+  const itemStatusOptions = item_statuses || ["all", "in_stock", "low_stock", "out_of_stock"];
+
+  const handleFilterChange = (field, value) => {
+    const updatedFilters = { ...activeFilters, [field]: value };
+    setActiveFilters(updatedFilters);
+
+    router.get(
+      route("admin.admin_dashboard"),
+      updatedFilters,
+      { preserveState: true, replace: true }
+    );
+  };
 
   const cards = [
     {
@@ -43,7 +64,7 @@ export default function Dashboard() {
     },
     {
       title: "Low Stock",
-      value: dashboard.low_stock_items.length,
+      value: dashboard.low_stock_items?.length ?? 0,
       icon: AlertTriangle,
       color: "from-rose-500 to-red-500",
     },
@@ -54,20 +75,38 @@ export default function Dashboard() {
       color: "from-emerald-500 to-green-600",
     },
     {
-      title: "Requests",
-      value: dashboard.frequently_requested.length,
+      title: "Total Requests",
+      value: dashboard.total_requests ?? 0,
       icon: TrendingUp,
       color: "from-violet-500 to-purple-600",
     },
   ];
 
-  const pieData = [
-    { name: "Healthy", value: 72 },
-    { name: "Low", value: 18 },
-    { name: "Out", value: 10 },
+  const stockHealthData = [
+    {
+      name: "In Stock",
+      value: dashboard.inventory_status_breakdown?.find((item) => item.status === "in_stock")?.total ?? 0,
+      color: "#10b981",
+    },
+    {
+      name: "Low Stock",
+      value: dashboard.inventory_status_breakdown?.find((item) => item.status === "low_stock")?.total ?? 0,
+      color: "#f59e0b",
+    },
+    {
+      name: "Out of Stock",
+      value: dashboard.inventory_status_breakdown?.find((item) => item.status === "out_of_stock")?.total ?? 0,
+      color: "#ef4444",
+    },
   ];
 
-  const COLORS = ["#10b981", "#f59e0b", "#ef4444"];
+  const stockTotal = stockHealthData.reduce((sum, item) => sum + item.value, 0);
+  const pieData = stockHealthData.map((item) => ({
+    ...item,
+    percentage: stockTotal > 0 ? Math.round((item.value / stockTotal) * 100) : 0,
+  }));
+
+  const COLORS = stockHealthData.map((item) => item.color);
 
   return (
     <AdminLayout>
@@ -86,6 +125,64 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* FILTERS */}
+        <Card className="rounded-3xl border-0 shadow-lg bg-white">
+          <CardHeader>
+            <CardTitle>Dashboard Filters</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 md:grid-cols-3">
+            <div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Date Range</p>
+              <select
+                value={activeFilters.date_range}
+                onChange={(event) => handleFilterChange('date_range', event.target.value)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-slate-50 text-slate-900"
+              >
+                {dateRangeOptions.map((range) => (
+                  <option key={range} value={range}>
+                    Last {range} days
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Request Status</p>
+              <select
+                value={activeFilters.request_status}
+                onChange={(event) => handleFilterChange('request_status', event.target.value)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-slate-50 text-slate-900"
+              >
+                {requestStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'all' ? 'All Requests' : status.charAt(0).toUpperCase() + status.slice(1)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <p className="text-sm font-medium text-slate-600 mb-2">Item Status</p>
+              <select
+                value={activeFilters.item_status}
+                onChange={(event) => handleFilterChange('item_status', event.target.value)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 bg-slate-50 text-slate-900"
+              >
+                {itemStatusOptions.map((status) => (
+                  <option key={status} value={status}>
+                    {status === 'all'
+                      ? 'All Items'
+                      : status
+                          .split('_')
+                          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                          .join(' ')}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* KPI */}
         <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
           {cards.map((item, i) => {
@@ -102,11 +199,6 @@ export default function Dashboard() {
                     <h2 className="text-4xl font-bold text-slate-800 mt-2">
                       {item.value}
                     </h2>
-
-                    <div className="mt-3 flex items-center gap-1 text-green-600 text-sm font-medium">
-                      <ArrowUpRight className="w-4 h-4" />
-                      +8.4%
-                    </div>
                   </div>
 
                   <div
@@ -229,31 +321,40 @@ export default function Dashboard() {
             <CardContent className="space-y-5">
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Inventory Usage</span>
-                  <span>82%</span>
+                  <span>Fulfillment Rate</span>
+                  <span>{dashboard.fulfillment_rate ?? 0}%</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full w-[82%] bg-indigo-500 rounded-full" />
+                  <div
+                    className="h-full bg-emerald-500 rounded-full"
+                    style={{ width: `${dashboard.fulfillment_rate ?? 0}%` }}
+                  />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-sm mb-2">
                   <span>Restock Priority</span>
-                  <span>68%</span>
+                  <span>{dashboard.restock_need ?? 0}%</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full w-[68%] bg-rose-500 rounded-full" />
+                  <div
+                    className="h-full bg-rose-500 rounded-full"
+                    style={{ width: `${dashboard.restock_need ?? 0}%` }}
+                  />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Fulfillment Rate</span>
-                  <span>94%</span>
+                  <span>Top Item Share</span>
+                  <span>{dashboard.top_item_share ?? 0}%</span>
                 </div>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full w-[94%] bg-emerald-500 rounded-full" />
+                  <div
+                    className="h-full bg-indigo-500 rounded-full"
+                    style={{ width: `${dashboard.top_item_share ?? 0}%` }}
+                  />
                 </div>
               </div>
             </CardContent>

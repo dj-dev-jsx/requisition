@@ -81,6 +81,10 @@ export default function AdminLayout({ children }) {
             <ClipboardIcon className="w-5 h-5" />
             Requests
           </Link>
+          <Link href={route("admin.profile")} className={navLink("admin.profile")}>
+            <User className="w-5 h-5" />
+            Profile
+          </Link>
           {/* <Link href={route("admin.settings")} className={navLink("admin.settings")}>
             <Settings className="w-5 h-5" />
             Settings
@@ -100,7 +104,7 @@ export default function AdminLayout({ children }) {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         <header className="h-20 bg-[#111827] shadow px-6 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-white">Admin Panel</h1>
+          <h1 className="text-xl font-semibold text-white">Admin</h1>
 
           <div className="flex items-center gap-4 relative">
             {/* Notifications */}

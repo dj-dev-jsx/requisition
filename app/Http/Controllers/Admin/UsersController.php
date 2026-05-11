@@ -55,13 +55,20 @@ public function addUser(Request $request)
         'username' => 'required|string|unique:users,username|max:30',
         'password' => 'required|string|min:6|confirmed',
         'role' => 'required|string|exists:roles,name',
+        'admin_password' => 'required|string',
     ]);
+
+    // Verify admin password
+    if (!Hash::check($validated['admin_password'], auth()->user()->password)) {
+        return back()->withErrors(['admin_password' => 'Incorrect admin password.']);
+    }
 
     $user = User::create([
         'firstname' => $validated['firstName'],
         'lastname' => $validated['lastName'],
         'email' => $validated['email'],
         'username' => $validated['username'],
+        'office' => $validated['office'],
         'password' => Hash::make($validated['password']),
     ]);
 

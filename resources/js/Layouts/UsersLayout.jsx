@@ -29,7 +29,7 @@ export default function UsersLayout({ children }) {
               className="h-9 w-auto"
             />
             <span className="font-semibold text-gray-700 text-lg hidden sm:block">
-              Requisition System
+              Requisition
             </span>
           </div>
 

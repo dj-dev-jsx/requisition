@@ -39,6 +39,22 @@ public function user_items(Request $request)
         'items.*.quantity' => 'required|numeric|min:1',
     ]);
 
+    $items = collect($request->items);
+    $itemIds = $items->pluck('item_id')->unique();
+    $inventoryItems = Items::whereIn('id', $itemIds)->get()->keyBy('id');
+
+    foreach ($items as $item) {
+        $inventoryItem = $inventoryItems[$item['item_id']] ?? null;
+
+        if (!$inventoryItem || $inventoryItem->status === 'out_of_stock' || $inventoryItem->stock_quantity <= 0) {
+            return back()->withErrors(['items' => 'One or more selected items are out of stock and cannot be requested.']);
+        }
+
+        if ($item['quantity'] > $inventoryItem->stock_quantity) {
+            return back()->withErrors(['items' => "Requested quantity for {$inventoryItem->description} exceeds available stock."]);
+        }
+    }
+
     $user = Auth::user();
 
     // ✅ Create main request

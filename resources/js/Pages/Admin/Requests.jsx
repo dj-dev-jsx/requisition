@@ -139,7 +139,7 @@ useEffect(() => {
               <select
                 value={month}
                 onChange={(e) => setMonth(e.target.value)}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900"
+                className="w-full sm:w-auto px-7 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900"
               >
                 <option value="">All Months</option>
                 {[...Array(12)].map((_, i) => (
@@ -151,7 +151,7 @@ useEffect(() => {
               <select
                 value={year}
                 onChange={(e) => setYear(e.target.value)}
-                className="w-full sm:w-auto px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900"
+                className="w-full sm:w-auto px-8 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900"
               >
                 <option value="">All Years</option>
                 {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map((y) => (

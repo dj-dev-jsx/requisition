@@ -62,6 +62,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
     Route::post('/admin/items/bulk-upload', [InventoryController::class, 'bulkUpload'])->name('admin.bulk_upload_items');
 });
 
@@ -85,7 +86,7 @@ Route::post('/api/admin/notifications/{id}/read', function ($id) {
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 

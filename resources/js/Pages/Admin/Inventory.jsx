@@ -186,6 +186,47 @@ const handleDelete = () => {
 };
 
   const columns = getInventoryColumns(handleEdit, confirmDelete, handleRestock);
+
+  const getPaginationPages = () => {
+    const current = items.current_page;
+    const last = items.last_page;
+    const siblingCount = 1;
+    const totalPageNumbers = siblingCount * 2 + 5;
+
+    if (last <= totalPageNumbers) {
+      return Array.from({ length: last }, (_, i) => i + 1);
+    }
+
+    const leftSiblingIndex = Math.max(current - siblingCount, 2);
+    const rightSiblingIndex = Math.min(current + siblingCount, last - 1);
+    const shouldShowLeftDots = leftSiblingIndex > 2;
+    const shouldShowRightDots = rightSiblingIndex < last - 1;
+    const pages = [1];
+
+    if (shouldShowLeftDots) {
+      pages.push('left-ellipsis');
+    } else {
+      for (let page = 2; page < leftSiblingIndex; page += 1) {
+        pages.push(page);
+      }
+    }
+
+    for (let page = leftSiblingIndex; page <= rightSiblingIndex; page += 1) {
+      pages.push(page);
+    }
+
+    if (shouldShowRightDots) {
+      pages.push('right-ellipsis');
+    } else {
+      for (let page = rightSiblingIndex + 1; page < last; page += 1) {
+        pages.push(page);
+      }
+    }
+
+    pages.push(last);
+    return pages;
+  };
+
 const [bulkOpen, setBulkOpen] = useState(false);
 const [bulkFile, setBulkFile] = useState(null);
 const [uploading, setUploading] = useState(false);
@@ -210,18 +251,20 @@ const [uploading, setUploading] = useState(false);
                 Track, manage, and optimize your stock levels with ease
               </p>
             </div>
-          <Button
-            onClick={() => setBulkOpen(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-lg px-6 py-3 font-semibold"
-          >
-            <Upload className="w-5 h-5" /> Bulk Upload
-          </Button>
-            <Button
-              onClick={() => setOpen(true)}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl rounded-lg px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105"
-            >
-              <Plus className="w-5 h-5" /> Add New Item
-            </Button>
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => setBulkOpen(true)}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg rounded-lg px-6 py-3 font-semibold"
+              >
+                <Upload className="w-5 h-5" /> Bulk Upload
+              </Button>
+                <Button
+                  onClick={() => setOpen(true)}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl rounded-lg px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105"
+                >
+                  <Plus className="w-5 h-5" /> Add New Item
+                </Button>
+            </div>
           </div>
 
           {/* Search Bar with Modern Styling */}
@@ -260,51 +303,61 @@ const [uploading, setUploading] = useState(false);
               </div>
 
               {/* Modern Pagination */}
-              <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+              <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-center mt-8 pt-6 border-t border-gray-200">
                 <div className="text-sm text-gray-600">
                   Page <span className="font-bold text-gray-900">{items.current_page}</span> of{' '}
                   <span className="font-bold text-gray-900">{items.last_page}</span>
                 </div>
-                <div className="flex justify-center items-center space-x-2">
-                  {/* Previous button */}
+                <div className="flex items-center gap-2 overflow-x-auto py-1 w-full md:w-auto">
                   <Button
                     disabled={!items.prev_page_url}
                     onClick={() =>
                       items.prev_page_url &&
                       router.get(items.prev_page_url, {}, { preserveState: true })
                     }
-                    className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                    className="shrink-0 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
                     ← Previous
                   </Button>
 
-                  {/* Page numbers */}
-                  <div className="flex gap-1">
-                    {Array.from({ length: items.last_page }, (_, i) => i + 1).map((page) => (
-                      <Button
-                        key={page}
-                        onClick={() =>
-                          router.get(route('admin.inventory'), { page, search }, { preserveState: true })
-                        }
-                        className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
-                          items.current_page === page
-                            ? 'bg-blue-600 text-white shadow-lg'
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {page}
-                      </Button>
-                    ))}
+                  <div className="flex min-w-max gap-1 items-center">
+                    {getPaginationPages().map((page, index) => {
+                      if (typeof page === 'string') {
+                        return (
+                          <span
+                            key={`${page}-${index}`}
+                            className="px-3 py-2 rounded-lg bg-transparent text-gray-500 select-none"
+                          >
+                            …
+                          </span>
+                        );
+                      }
+
+                      return (
+                        <Button
+                          key={page}
+                          onClick={() =>
+                            router.get(route('admin.inventory'), { page, search }, { preserveState: true })
+                          }
+                          className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
+                            items.current_page === page
+                              ? 'bg-blue-600 text-white shadow-lg'
+                              : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
                   </div>
 
-                  {/* Next button */}
                   <Button
                     disabled={!items.next_page_url}
                     onClick={() =>
                       items.next_page_url &&
                       router.get(items.next_page_url, {}, { preserveState: true })
                     }
-                    className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
+                    className="shrink-0 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium"
                   >
                     Next →
                   </Button>
@@ -363,7 +416,7 @@ const [uploading, setUploading] = useState(false);
                   name="image"
                   type="file"
                   onChange={(e) => setForm({ ...form, image: e.target.files[0] })}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-all duration-200 cursor-pointer"
+                  className="w-full px-6 py-8 rounded-xl border-2 border-dashed border-blue-300 bg-blue-50 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200 transition-all duration-200 cursor-pointer"
                   accept="image/*"
                 />
                 <p className="text-xs text-gray-500 mt-2">Supported formats: JPG, PNG, WebP (Max 5MB)</p>

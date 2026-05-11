@@ -29,6 +29,10 @@ export default function RequestDetail() {
     }, {})
   );
 
+  const isApprovalBlocked = request.items.some(
+    (ri) => Number(ri.item.stock_quantity) === 0 || ri.item.status === "out_of_stock"
+  );
+
   const handleChange = (id, value, stock) => {
     let qty = Number(value);
     if (Number.isNaN(qty)) qty = 0;
@@ -41,6 +45,11 @@ export default function RequestDetail() {
   };
 
   const approveRequest = () => {
+    if (isApprovalBlocked) {
+      toast.error("One or more items are out of stock. Please resolve the request before approving.");
+      return;
+    }
+
     router.post(
       `/admin/requests/${request.id}/approve`,
       { items: quantities },
@@ -157,37 +166,53 @@ export default function RequestDetail() {
           </Card>
 
           {request.status === "pending" && (
-            <div className="flex justify-end mt-4">
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    className= "flex items-center gap-2 px-6 py-3 font-semibold rounded-2xl shadow-lg transition bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
-                  
-                  >
-                    <CheckCircle className="w-5 h-5" /> Approve & Issue Items
-                  </Button>
-                </AlertDialogTrigger>
-
-                <AlertDialogContent className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-lg font-semibold text-slate-900">Confirm approval</AlertDialogTitle>
-                    <AlertDialogDescription className="text-sm text-slate-500 mt-2">
-                      Are you sure you want to approve and issue these items? This action cannot be undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="flex justify-end gap-3 mt-6">
-                    <AlertDialogCancel className="rounded-2xl border border-slate-200 px-4 py-2 hover:bg-slate-50">
-                      Cancel
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      className="rounded-2xl !bg-blue-600 !text-white hover:!bg-blue-700 px-4 py-2"
-                      onClick={approveRequest}
+            <div className="flex flex-col gap-3 justify-end mt-4">
+              {isApprovalBlocked && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl p-3">
+                  One or more items are out of stock. Approval is blocked until the inventory is restocked.
+                </p>
+              )}
+              <div className="flex justify-end">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      disabled={isApprovalBlocked}
+                      className={`flex items-center gap-2 px-6 py-3 font-semibold rounded-2xl shadow-lg transition ${
+                        isApprovalBlocked
+                          ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                          : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                      }`}
                     >
-                      Approve
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+                      <CheckCircle className="w-5 h-5" /> Approve & Issue Items
+                    </Button>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-lg font-semibold text-slate-900">Confirm approval</AlertDialogTitle>
+                      <AlertDialogDescription className="text-sm text-slate-500 mt-2">
+                        Are you sure you want to approve and issue these items? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex justify-end gap-3 mt-6">
+                      <AlertDialogCancel className="rounded-2xl border border-slate-200 px-4 py-2 hover:bg-slate-50">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        disabled={isApprovalBlocked}
+                        className={`rounded-2xl px-4 py-2 ${
+                          isApprovalBlocked
+                            ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                            : "!bg-blue-600 !text-white hover:!bg-blue-700"
+                        }`}
+                        onClick={approveRequest}
+                      >
+                        Approve
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           )}
         </div>

@@ -33,12 +33,40 @@ export default function Items({ items, filters }) {
   const [purpose, setPurpose] = useState("");
   const [search, setSearch] = useState(filters.search || "");
 
+const canRequestItem = (item) => {
+  return item.stock_quantity > 0 && item.status !== "out_of_stock";
+};
+
 const addItem = (item) => {
+  if (!canRequestItem(item)) return;
+
   setSelectedItems((prev) => {
     if (prev.find((i) => i.id === item.id)) return prev;
 
     return [...prev, { ...item, quantity: 1 }];
   });
+};
+
+const getStockStatus = (item) => {
+  if (item.status === "out_of_stock" || item.stock_quantity === 0) {
+    return {
+      label: "Out of Stock",
+      color: "bg-red-100 text-red-700 border-red-200",
+      icon: XCircle,
+    };
+  } else if (item.status === "low_stock" || item.stock_quantity <= 5) {
+    return {
+      label: "Low Stock",
+      color: "bg-yellow-100 text-yellow-700 border-yellow-200",
+      icon: AlertCircle,
+    };
+  } else {
+    return {
+      label: "In Stock",
+      color: "bg-green-100 text-green-700 border-green-200",
+      icon: CheckCircle,
+    };
+  }
 };
 
 const updateQuantity = (id, qty, maxStock) => {
@@ -77,6 +105,13 @@ const decreaseQty = (item) => {
 
 const submitRequest = () => {
   if (selectedItems.length === 0) return;
+
+  const invalidItems = selectedItems.filter((item) => !canRequestItem(item));
+  if (invalidItems.length > 0) {
+    setSelectedItems((prev) => prev.filter(canRequestItem));
+    toast.error("Some selected items are no longer available. Please remove them before submitting.");
+    return;
+  }
 
   setLoading(true);
 
@@ -137,27 +172,6 @@ useEffect(() => {
 
   return () => clearTimeout(delay);
 }, [search]);
-const getStockStatus = (qty) => {
-  if (qty === 0) {
-    return {
-      label: "Out of Stock",
-      color: "bg-red-100 text-red-700 border-red-200",
-      icon: XCircle,
-    };
-  } else if (qty <= 5) {
-    return {
-      label: "Low Stock",
-      color: "bg-yellow-100 text-yellow-700 border-yellow-200",
-      icon: AlertCircle,
-    };
-  } else {
-    return {
-      label: "In Stock",
-      color: "bg-green-100 text-green-700 border-green-200",
-      icon: CheckCircle,
-    };
-  }
-};
 return (
   <UsersLayout>
     <Head title="Items" />
@@ -193,17 +207,17 @@ return (
           <div className="lg:col-span-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {items.map((item) => {
-                const stockStatus = getStockStatus(item.stock_quantity);
+                const stockStatus = getStockStatus(item);
                 const StatusIcon = stockStatus.icon;
 
                 return (
                   <div
                     key={item.id}
                     onClick={() => {
-                      if (item.stock_quantity > 0) addItem(item);
+                      if (canRequestItem(item)) addItem(item);
                     }}
                     className={`group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer ${
-                      item.stock_quantity === 0 ? "opacity-60 cursor-not-allowed" : ""
+                      !canRequestItem(item) ? "opacity-60 cursor-not-allowed" : ""
                     }`}
                   >
                     <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 relative">
@@ -230,18 +244,18 @@ return (
                       </div>
 
                       <button
-                        disabled={item.stock_quantity === 0}
+                        disabled={!canRequestItem(item)}
                         onClick={(e) => {
                           e.stopPropagation();
                           addItem(item);
                         }}
                         className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-medium transition-all duration-200 ${
-                          item.stock_quantity === 0
+                          !canRequestItem(item)
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                             : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                         }`}
                       >
-                        {item.stock_quantity === 0 ? (
+                        {!canRequestItem(item) ? (
                           <>
                             <XCircle className="h-4 w-4" />
                             Unavailable
@@ -363,7 +377,7 @@ return (
                         </button>
                       </AlertDialogTrigger>
 
-                      <AlertDialogContent className="sm:max-w-md">
+                      <AlertDialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-6">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="flex items-center gap-2">
                             <Send className="h-5 w-5 text-green-600" />
@@ -384,7 +398,7 @@ return (
                             onClick={submitRequest}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            Yes, Submit
+                            Submit
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -471,7 +485,7 @@ return (
                   </button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="sm:max-w-md">
+                <AlertDialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-6">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                       <Send className="h-5 w-5 text-green-600" />
@@ -492,7 +506,7 @@ return (
                       onClick={submitRequest}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      Yes, Submit
+                      Submit
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

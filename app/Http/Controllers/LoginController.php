@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Items;
 use App\Models\RequestItems;
+use App\Models\Requests;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -12,64 +14,109 @@ use Inertia\Inertia;
 
 class LoginController extends Controller
 {
-public function admin_dashboard()
+public function admin_dashboard(Request $request)
 {
-    // 1️⃣ Total items
-    $totalItems = Items::count();
+    $filters = [
+        'date_range' => (int) $request->query('date_range', 7),
+        'request_status' => $request->query('request_status', 'all'),
+        'item_status' => $request->query('item_status', 'all'),
+    ];
 
-    // 2️⃣ Low stock items (threshold: 5)
-    $lowStockItems = Items::where('stock_quantity', '<=', 5)
-        ->get(['id', 'description', 'stock_quantity', 'unit']);
+    $allowedDateRanges = [7, 14, 30];
+    if (!in_array($filters['date_range'], $allowedDateRanges, true)) {
+        $filters['date_range'] = 7;
+    }
 
-    // 3️⃣ Recent requests (last 10)
-    $recentRequests = RequestItems::with(['request.user', 'item'])
-        ->latest()
-        ->take(10)
-        ->get()
-        ->map(function ($requestItem) {
-            return [
-                'id' => $requestItem->id,
-                'description' => $requestItem->item->description ?? 'N/A',
-                'issued_quantity' => $requestItem->issued_quantity,
-                'user' => $requestItem->request->user->firstname . ' ' . $requestItem->request->user->lastname ?? 'Unknown',
-                'date' => $requestItem->created_at->format('Y-m-d H:i'),
-            ];
-        });
+    $allowedRequestStatuses = ['all', 'pending', 'processed', 'rejected'];
+    if (!in_array($filters['request_status'], $allowedRequestStatuses, true)) {
+        $filters['request_status'] = 'all';
+    }
 
-    // 4️⃣ Frequently requested items (top 5)
-    $frequentlyRequested = RequestItems::select('item_id', DB::raw('COUNT(*) as request_count'))
-        ->groupBy('item_id')
-        ->orderByDesc('request_count')
-        ->take(5)
-        ->with('item')
-        ->get()
-        ->map(function ($req) {
-            return [
-                'id' => $req->item_id,
-                'description' => $req->item->description ?? 'N/A',
-                'request_count' => $req->request_count,
-            ];
-        });
+    $allowedItemStatuses = ['all', 'in_stock', 'low_stock', 'out_of_stock'];
+    if (!in_array($filters['item_status'], $allowedItemStatuses, true)) {
+        $filters['item_status'] = 'all';
+    }
 
-    // 5️⃣ Inventory summary by unit
-    $inventorySummary = Items::select('unit', DB::raw('SUM(stock_quantity) as total_quantity'))
+    $startDate = Carbon::now()->subDays($filters['date_range']);
+
+    $itemQuery = Items::query();
+    if ($filters['item_status'] !== 'all') {
+        $itemQuery->where('status', $filters['item_status']);
+    }
+
+    $totalItems = $itemQuery->count();
+    $inventorySummary = $itemQuery->select('unit', DB::raw('SUM(stock_quantity) as total_quantity'))
         ->groupBy('unit')
         ->get();
 
-    $requestsOverTime = RequestItems::select(
-        DB::raw('DATE(created_at) as date'),
-        DB::raw('COUNT(*) as request_count')
-    )
-    ->where('created_at', '>=', Carbon::now()->subDays(7))
-    ->groupBy('date')
-    ->orderBy('date')
-    ->get()
-    ->map(fn($r) => [
-        'date' => Carbon::parse($r->date)->format('M d'), // e.g., Mar 23
-        'request_count' => $r->request_count,
-    ]);
-    
-    $totalUsers = User::role('user')->count();
+    $inventoryStatusBreakdown = Items::select('status', DB::raw('COUNT(*) as total'))
+        ->groupBy('status')
+        ->get()
+        ->map(fn ($row) => [
+            'status' => $row->status,
+            'total' => $row->total,
+        ]);
+
+    $lowStockItems = Items::where('stock_quantity', '<=', 5)
+        ->get(['id', 'description', 'stock_quantity', 'unit', 'status']);
+
+    $requestItemsBase = RequestItems::with(['item', 'request'])
+        ->where('created_at', '>=', $startDate);
+
+    if ($filters['request_status'] !== 'all') {
+        $requestItemsBase->whereHas('request', fn ($query) => $query->where('status', $filters['request_status']));
+    }
+
+    $recentRequests = (clone $requestItemsBase)
+        ->latest('created_at')
+        ->take(6)
+        ->get()
+        ->map(fn ($requestItem) => [
+            'id' => $requestItem->id,
+            'description' => $requestItem->item->description ?? 'N/A',
+            'issued_quantity' => $requestItem->issued_quantity ?? $requestItem->quantity,
+            'user' => optional($requestItem->request->user)->firstname . ' ' . optional($requestItem->request->user)->lastname,
+            'status' => $requestItem->request->status ?? 'Unknown',
+            'date' => $requestItem->created_at->format('M d, H:i'),
+        ]);
+
+    $totalRequests = (clone $requestItemsBase)->count();
+
+    $frequentlyRequested = (clone $requestItemsBase)
+        ->select('item_id', DB::raw('COUNT(*) as request_count'))
+        ->groupBy('item_id')
+        ->orderByDesc('request_count')
+        ->take(5)
+        ->get()
+        ->map(fn ($req) => [
+            'id' => $req->item_id,
+            'description' => $req->item->description ?? 'N/A',
+            'request_count' => $req->request_count,
+        ]);
+
+    $requestsOverTime = (clone $requestItemsBase)
+        ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as request_count'))
+        ->groupBy('date')
+        ->orderBy('date')
+        ->get()
+        ->map(fn ($r) => [
+            'date' => Carbon::parse($r->date)->format('M d'),
+            'request_count' => $r->request_count,
+        ]);
+
+    $requestStatusBreakdown = Requests::select('status', DB::raw('COUNT(*) as total'))
+        ->where('created_at', '>=', $startDate)
+        ->groupBy('status')
+        ->get()
+        ->mapWithKeys(fn ($row) => [$row->status => $row->total]);
+
+    $totalRequestsForRate = Requests::where('created_at', '>=', $startDate)->count();
+    $processedCount = Requests::where('created_at', '>=', $startDate)->where('status', 'processed')->count();
+    $fulfillmentRate = $totalRequestsForRate > 0 ? round(($processedCount / $totalRequestsForRate) * 100) : 0;
+    $restockNeed = $totalItems > 0 ? round($lowStockItems->count() / $totalItems * 100) : 0;
+    $topItemShare = $totalRequests > 0 ? round((optional($frequentlyRequested->first())['request_count'] ?? 0) / $totalRequests * 100) : 0;
+
+    $totalUsers = User::count();
 
     return Inertia::render('Admin/Dashboard', [
         'dashboard' => [
@@ -78,9 +125,19 @@ public function admin_dashboard()
             'recent_requests' => $recentRequests,
             'frequently_requested' => $frequentlyRequested,
             'inventory_summary' => $inventorySummary,
+            'inventory_status_breakdown' => $inventoryStatusBreakdown,
             'requests_over_time' => $requestsOverTime,
             'total_users' => $totalUsers,
+            'total_requests' => $totalRequests,
+            'request_status_breakdown' => $requestStatusBreakdown,
+            'fulfillment_rate' => $fulfillmentRate,
+            'restock_need' => $restockNeed,
+            'top_item_share' => $topItemShare,
         ],
+        'filters' => $filters,
+        'request_statuses' => $allowedRequestStatuses,
+        'item_statuses' => $allowedItemStatuses,
+        'date_ranges' => $allowedDateRanges,
     ]);
 }
 

@@ -141,6 +141,11 @@ public function approve(Request $req, Requests $request)
 
     try {
         foreach ($request->items as $item) {
+            $inventoryItem = $item->item;
+            if ($inventoryItem->status === 'out_of_stock' || $inventoryItem->stock_quantity <= 0) {
+                throw new \Exception('Cannot approve request because "' . $inventoryItem->description . '" is out of stock.');
+            }
+
             $issuedQty = (int) ($req->items[(string) $item->id] ?? 0);
             $inventoryItem = $item->item;
 
