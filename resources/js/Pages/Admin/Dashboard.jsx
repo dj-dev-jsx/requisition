@@ -1,7 +1,7 @@
 
 import AdminLayout from "@/Layouts/AdminLayout";
 import { Head, router, usePage } from "@inertiajs/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import {
@@ -40,11 +40,20 @@ export default function Dashboard() {
     item_status: filters?.item_status ?? "all",
   });
 
+  useEffect(() => {
+    setActiveFilters({
+      date_range: filters?.date_range ?? 7,
+      request_status: filters?.request_status ?? "all",
+      item_status: filters?.item_status ?? "all",
+    });
+  }, [filters?.date_range, filters?.request_status, filters?.item_status]);
+
   const dateRangeOptions = date_ranges || [7, 14, 30];
   const requestStatusOptions = request_statuses || ["all", "pending", "processed", "rejected"];
   const itemStatusOptions = item_statuses || ["all", "in_stock", "low_stock", "out_of_stock"];
 
-  const handleFilterChange = (field, value) => {
+  const handleFilterChange = (field, rawValue) => {
+    const value = field === "date_range" ? Number(rawValue) : rawValue;
     const updatedFilters = { ...activeFilters, [field]: value };
     setActiveFilters(updatedFilters);
 
@@ -69,10 +78,10 @@ export default function Dashboard() {
       color: "from-rose-500 to-red-500",
     },
     {
-      title: "Users",
-      value: dashboard.total_users,
-      icon: Users,
-      color: "from-emerald-500 to-green-600",
+      title: "Restock Priority",
+      value: `${dashboard.restock_need ?? 0}%`,
+      icon: ShieldAlert,
+      color: "from-fuchsia-500 to-pink-500",
     },
     {
       title: "Total Requests",
@@ -107,6 +116,14 @@ export default function Dashboard() {
   }));
 
   const COLORS = stockHealthData.map((item) => item.color);
+  const requestStatusData = dashboard.request_status_breakdown || [];
+  const inventorySummaryData = dashboard.inventory_summary || [];
+
+  const formatStatusLabel = (status) =>
+    status
+      .split('_')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
 
   return (
     <AdminLayout>
@@ -280,7 +297,7 @@ export default function Dashboard() {
                       />
                       {item.name}
                     </span>
-                    <span>{item.value}%</span>
+                    <span>{item.percentage}%</span>
                   </div>
                 ))}
               </div>
@@ -324,6 +341,9 @@ export default function Dashboard() {
                   <span>Fulfillment Rate</span>
                   <span>{dashboard.fulfillment_rate ?? 0}%</span>
                 </div>
+                <p className="text-xs text-slate-500 mb-2">
+                  Issued quantity compared to requested quantity
+                </p>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-emerald-500 rounded-full"
@@ -337,6 +357,9 @@ export default function Dashboard() {
                   <span>Restock Priority</span>
                   <span>{dashboard.restock_need ?? 0}%</span>
                 </div>
+                <p className="text-xs text-slate-500 mb-2">
+                  Percentage of items below the low stock threshold
+                </p>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-rose-500 rounded-full"
@@ -347,9 +370,12 @@ export default function Dashboard() {
 
               <div>
                 <div className="flex justify-between text-sm mb-2">
-                  <span>Top Item Share</span>
+                  <span>Top Item Demand Share</span>
                   <span>{dashboard.top_item_share ?? 0}%</span>
                 </div>
+                <p className="text-xs text-slate-500 mb-2">
+                  Share of quantity for the most requested item
+                </p>
                 <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
                   <div
                     className="h-full bg-indigo-500 rounded-full"
@@ -399,6 +425,7 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
 
         {/* ACTIVITY FEED */}
         <Card className="rounded-3xl border-0 shadow-lg">

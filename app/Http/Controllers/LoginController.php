@@ -44,12 +44,14 @@ public function admin_dashboard(Request $request)
         $itemQuery->where('status', $filters['item_status']);
     }
 
-    $totalItems = $itemQuery->count();
-    $inventorySummary = $itemQuery->select('unit', DB::raw('SUM(stock_quantity) as total_quantity'))
+    $totalItems = (clone $itemQuery)->count();
+    $inventorySummary = (clone $itemQuery)
+        ->select('unit', DB::raw('SUM(stock_quantity) as total_quantity'))
         ->groupBy('unit')
         ->get();
 
-    $inventoryStatusBreakdown = Items::select('status', DB::raw('COUNT(*) as total'))
+    $inventoryStatusBreakdown = (clone $itemQuery)
+        ->select('status', DB::raw('COUNT(*) as total'))
         ->groupBy('status')
         ->get()
         ->map(fn ($row) => [
@@ -57,15 +59,27 @@ public function admin_dashboard(Request $request)
             'total' => $row->total,
         ]);
 
-    $lowStockItems = Items::where('stock_quantity', '<=', 5)
+    $lowStockItems = (clone $itemQuery)
+        ->where('stock_quantity', '<=', 5)
         ->get(['id', 'description', 'stock_quantity', 'unit', 'status']);
 
-    $requestItemsBase = RequestItems::with(['item', 'request'])
-        ->where('created_at', '>=', $startDate);
+    $requestQuery = Requests::with('user')
+        ->where('created_at', '>=', $startDate)
+        ->when($filters['request_status'] !== 'all', fn ($query) => $query->where('status', $filters['request_status']))
+        ->when($filters['item_status'] !== 'all', fn ($query) =>
+            $query->whereHas('items', fn ($query) =>
+                $query->whereHas('item', fn ($query) => $query->where('status', $filters['item_status']))
+            )
+        );
 
-    if ($filters['request_status'] !== 'all') {
-        $requestItemsBase->whereHas('request', fn ($query) => $query->where('status', $filters['request_status']));
-    }
+    $requestItemsBase = RequestItems::with(['item', 'request'])
+        ->where('created_at', '>=', $startDate)
+        ->when($filters['request_status'] !== 'all', fn ($query) =>
+            $query->whereHas('request', fn ($query) => $query->where('status', $filters['request_status']))
+        )
+        ->when($filters['item_status'] !== 'all', fn ($query) =>
+            $query->whereHas('item', fn ($query) => $query->where('status', $filters['item_status']))
+        );
 
     $recentRequests = (clone $requestItemsBase)
         ->latest('created_at')
@@ -80,10 +94,12 @@ public function admin_dashboard(Request $request)
             'date' => $requestItem->created_at->format('M d, H:i'),
         ]);
 
-    $totalRequests = (clone $requestItemsBase)->count();
+    $totalRequests = (clone $requestQuery)->count();
+    $totalRequestItems = (clone $requestItemsBase)->sum('quantity');
+    $totalIssuedQuantity = (clone $requestItemsBase)->sum(DB::raw('COALESCE(issued_quantity, quantity)'));
 
     $frequentlyRequested = (clone $requestItemsBase)
-        ->select('item_id', DB::raw('COUNT(*) as request_count'))
+        ->select('item_id', DB::raw('SUM(quantity) as request_count'))
         ->groupBy('item_id')
         ->orderByDesc('request_count')
         ->take(5)
@@ -94,7 +110,7 @@ public function admin_dashboard(Request $request)
             'request_count' => $req->request_count,
         ]);
 
-    $requestsOverTime = (clone $requestItemsBase)
+    $requestsOverTime = (clone $requestQuery)
         ->select(DB::raw('DATE(created_at) as date'), DB::raw('COUNT(*) as request_count'))
         ->groupBy('date')
         ->orderBy('date')
@@ -104,17 +120,18 @@ public function admin_dashboard(Request $request)
             'request_count' => $r->request_count,
         ]);
 
-    $requestStatusBreakdown = Requests::select('status', DB::raw('COUNT(*) as total'))
-        ->where('created_at', '>=', $startDate)
+    $requestStatusBreakdown = (clone $requestQuery)
+        ->select('status', DB::raw('COUNT(*) as total'))
         ->groupBy('status')
         ->get()
-        ->mapWithKeys(fn ($row) => [$row->status => $row->total]);
+        ->map(fn ($row) => [
+            'status' => $row->status,
+            'total' => $row->total,
+        ]);
 
-    $totalRequestsForRate = Requests::where('created_at', '>=', $startDate)->count();
-    $processedCount = Requests::where('created_at', '>=', $startDate)->where('status', 'processed')->count();
-    $fulfillmentRate = $totalRequestsForRate > 0 ? round(($processedCount / $totalRequestsForRate) * 100) : 0;
+    $fulfillmentRate = $totalRequestItems > 0 ? round($totalIssuedQuantity / $totalRequestItems * 100) : 0;
     $restockNeed = $totalItems > 0 ? round($lowStockItems->count() / $totalItems * 100) : 0;
-    $topItemShare = $totalRequests > 0 ? round((optional($frequentlyRequested->first())['request_count'] ?? 0) / $totalRequests * 100) : 0;
+    $topItemShare = $totalRequestItems > 0 ? round((optional($frequentlyRequested->first())['request_count'] ?? 0) / $totalRequestItems * 100) : 0;
 
     $totalUsers = User::count();
 

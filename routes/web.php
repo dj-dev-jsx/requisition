@@ -18,7 +18,7 @@ Route::get('/', function () {
 
         if ($user->roles->contains('name', 'admin')) {
             return redirect()->route('admin.admin_dashboard');
-        }elseif ($user->roles->contains('name', 'user')) {
+        } elseif ($user->roles->contains('name', 'user')) {
             return redirect()->route('user.user_dashboard');
         }
 
@@ -32,13 +32,7 @@ Route::get('/', function () {
         ]);
     }
 
-    // guest only
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 })->name('dashboard');
 
 // Route::get('/dashboard', function () {
