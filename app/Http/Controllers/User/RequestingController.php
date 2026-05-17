@@ -80,4 +80,17 @@ public function user_items(Request $request)
 
     return redirect()->back()->with('success', 'Request submitted successfully!');
 }
+
+public function showRequest(UserRequest $request)
+{
+    // Ensure user can only view their own requests
+    if ($request->user_id !== Auth::id()) {
+        abort(403);
+    }
+
+    $request->load('items.item', 'user');
+    return inertia('User/RequestDetail', [
+        'request' => $request,
+    ]);
+}
 }

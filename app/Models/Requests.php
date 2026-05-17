@@ -13,6 +13,7 @@ class Requests extends Model
         'purpose',
         'processed_by',
         'approved_at',
+        'rejection_reason',
     ];
     protected $casts = [
         'approved_at' => 'datetime',

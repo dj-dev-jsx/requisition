@@ -125,13 +125,17 @@ public function update(Request $request, $id)
 
 public function showRequest(Requests $request)
 {
-    $request->load('items.item', 'user'); // eager load related data
+    $request->load('items.item', 'user', 'ris'); // eager load related data
     return Inertia::render('Admin/RequestDetail', [
         'request' => $request,
     ]);
 }
 public function approve(Request $req, Requests $request)
 {
+    $req->validate([
+        'issue_date' => 'nullable|date',
+    ]);
+
     if ($request->status !== 'pending') {
         return redirect()->route('admin.requests')
             ->withErrors(['error' => 'This request has already been processed.']);
@@ -213,18 +217,24 @@ public function approve(Request $req, Requests $request)
                 'issued_by' => Auth::id(),
                 'requested_by' => $request->user_id,
                 'received_by' => null,
+                'issue_date' => $req->issue_date ?: null,
             ]);
         }
 
         DB::commit();
 
-        return back()->with('success', 'Request approved successfully.');
+    return response()->json([
+        'success' => true,
+        'print_url' => route('admin.requests.print', $request->id),
+    ]);
 
     } catch (\Exception $e) {
         DB::rollback();
         return back()->withErrors(['error' => $e->getMessage()]);
     }
 }
+
+
 
 public function printRis(Requests $request)
 {
@@ -235,7 +245,10 @@ public function printRis(Requests $request)
     $logo = public_path('logo.png');
     if (!file_exists($logo)) $logo = null;
     $approvedAt = $request->approved_at ?? null;
-    $risNumber = $ris->ris_number ?? 'N/A';
+    $risNumber = $ris ? ($ris->ris_number ?? 'N/A') : 'N/A';
+    $filename = "RIS-{$risNumber}.pdf";
+    // Sanitize filename to remove invalid characters
+    $filename = preg_replace('/[\/\\\\:*?"<>|]/', '-', $filename);
     $pdf = Pdf::loadView('admin.requests.pdf', [
         'ris' => $ris,
         'request' => $request,
@@ -245,9 +258,33 @@ public function printRis(Requests $request)
         'risNumber' => $risNumber,
     ])->setPaper('a4', 'portrait');
 
-    return $pdf->stream("RIS-{$risNumber}.pdf");
+    return $pdf->stream($filename);
 }
 
+
+public function reject(Request $req, Requests $request)
+{
+    $req->validate([
+        'rejection_reason' => 'required|string|max:1000'
+    ]);
+
+    if ($request->status !== 'pending') {
+        return redirect()->route('admin.requests')
+            ->withErrors(['error' => 'This request has already been processed.']);
+    }
+
+    // Update request
+    $request->update([
+        'status' => 'rejected',
+        'processed_by' => Auth::id(),
+        'rejection_reason' => $req->rejection_reason,
+    ]);
+
+    // Send notification to user
+    $request->user->notify(new \App\Notifications\RejectedRequestNotification($request));
+
+    return back()->with('success', 'Request rejected successfully.');
+}
 public function bulkUpload(Request $request)
 {
     $request->validate([

@@ -4,7 +4,7 @@ import AdminLayout from "@/Layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, User, CheckCircle } from "lucide-react";
+import { ClipboardList, User, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -18,6 +18,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import axios from "axios";
 
 export default function RequestDetail() {
   const { request } = usePage().props;
@@ -28,6 +29,8 @@ export default function RequestDetail() {
       return acc;
     }, {})
   );
+
+  const [rejectionReason, setRejectionReason] = useState("");
 
   const isApprovalBlocked = request.items.some(
     (ri) => Number(ri.item.stock_quantity) === 0 || ri.item.status === "out_of_stock"
@@ -44,19 +47,49 @@ export default function RequestDetail() {
     setQuantities((prev) => ({ ...prev, [id]: qty }));
   };
 
-  const approveRequest = () => {
-    if (isApprovalBlocked) {
-      toast.error("One or more items are out of stock. Please resolve the request before approving.");
+const approveRequest = async () => {
+  if (isApprovalBlocked) {
+    toast.error(
+      "One or more items are out of stock. Please resolve the request before approving."
+    );
+    return;
+  }
+
+  try {
+    const response = await axios.post(
+      `/admin/requests/${request.id}/approve`,
+      {
+        items: quantities,
+      }
+    );
+
+    toast.success("Request approved!");
+
+    if (response.data.print_url) {
+      window.open(response.data.print_url, "_blank");
+    }
+
+  } catch (error) {
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to approve request."
+    );
+  }
+};
+
+  const rejectRequest = () => {
+    if (!rejectionReason.trim()) {
+      toast.error("Please provide a rejection reason.");
       return;
     }
 
     router.post(
-      `/admin/requests/${request.id}/approve`,
-      { items: quantities },
+      `/admin/requests/${request.id}/reject`,
+      { rejection_reason: rejectionReason },
       {
         onSuccess: () => {
-          toast.success("Request approved!");
-          window.open(`/admin/requests/${request.id}/print`, "_blank");
+          toast.success("Request rejected!");
+          setRejectionReason("");
         },
       }
     );
@@ -88,6 +121,24 @@ export default function RequestDetail() {
               {request.status}
             </Badge>
           </div>
+
+          {request.status === "rejected" && request.rejection_reason && (
+            <Card className="shadow-sm border border-red-200 bg-red-50">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-3">
+                  <div className="bg-red-100 p-2 rounded-full flex items-center justify-center">
+                    <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-red-800 mb-2">Rejection Reason</h3>
+                    <p className="text-red-700">{request.rejection_reason}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="shadow-sm border border-slate-200 bg-white">
             <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-6">
@@ -172,7 +223,47 @@ export default function RequestDetail() {
                   One or more items are out of stock. Approval is blocked until the inventory is restocked.
                 </p>
               )}
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex items-center gap-2 px-6 py-3 font-semibold rounded-2xl border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 transition"
+                    >
+                      <XCircle className="w-5 h-5" /> Reject Request
+                    </Button>
+                  </AlertDialogTrigger>
+
+                  <AlertDialogContent className="bg-white rounded-3xl shadow-2xl border border-slate-200 p-6">
+                    <AlertDialogHeader>
+                      <AlertDialogTitle className="text-lg font-semibold text-slate-900">Reject Request</AlertDialogTitle>
+                      <AlertDialogDescription className="text-sm text-slate-500 mt-2">
+                        Please provide a reason for rejecting this request. The user will be notified.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="mt-4">
+                      <textarea
+                        placeholder="Enter rejection reason..."
+                        value={rejectionReason}
+                        onChange={(e) => setRejectionReason(e.target.value)}
+                        className="w-full min-h-24 rounded-2xl border border-slate-200 p-3 focus:ring-2 focus:ring-red-500 bg-white text-slate-900 outline-none resize-none"
+                        rows={4}
+                      />
+                    </div>
+                    <AlertDialogFooter className="flex justify-end gap-3 mt-6">
+                      <AlertDialogCancel className="rounded-2xl border border-slate-200 px-4 py-2 hover:bg-slate-50">
+                        Cancel
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        className="!bg-red-600 !text-white hover:!bg-red-700 rounded-2xl px-4 py-2"
+                        onClick={rejectRequest}
+                      >
+                        Reject Request
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button

@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/requests', [RequestsController::class, 'requests'])->name('admin.requests');
     Route::get('/requests/{request}', [InventoryController::class, 'showRequest'])->name('admin.requests.show');
     Route::post('/requests/{request}/approve', [InventoryController::class, 'approve'])->name('admin.requests.approve');
+    Route::post('/requests/{request}/reject', [InventoryController::class, 'reject'])->name('admin.requests.reject');
     Route::get('/requests/{request}/print', [InventoryController::class, 'printRis'])->name('admin.requests.print');
     
     Route::get('/ris/export', [RequestsController::class, 'exportRIS'])->name('ris.export');
@@ -65,6 +66,7 @@ Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
     Route::get('/items', [RequestingController::class, 'user_items'])->name('user.items');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('user.profile');
     Route::post('/requests', [RequestingController::class, 'store'])->name('requests.store');
+    Route::get('/requests/{request}', [RequestingController::class, 'showRequest'])->name('user.requests.show');
 });
 
 Route::get('/api/admin/notifications', function() {

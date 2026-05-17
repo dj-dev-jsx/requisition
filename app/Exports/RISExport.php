@@ -107,7 +107,7 @@ public function map($row): array
     $reqItem = $row->item;
     $item = $reqItem?->item;
 
-    $quantity = $reqItem?->issued_quantity ?? 0;
+    $quantity = intval($reqItem?->issued_quantity ?? 0);
 
     
 
@@ -192,7 +192,9 @@ public function map($row): array
                     return;
                 }
 
-                // number format for cost columns
+                // number format for quantity and cost columns
+                $sheet->getStyle("F{$startDataRow}:F{$highestRow}")
+                    ->getNumberFormat()->setFormatCode('#,##0');
                 $sheet->getStyle("G{$startDataRow}:G{$highestRow}")
                     ->getNumberFormat()->setFormatCode('#,##0.00');
                 $sheet->getStyle("H{$startDataRow}:H{$highestRow}")

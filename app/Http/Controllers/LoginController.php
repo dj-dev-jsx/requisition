@@ -48,7 +48,11 @@ public function admin_dashboard(Request $request)
     $inventorySummary = (clone $itemQuery)
         ->select('unit', DB::raw('SUM(stock_quantity) as total_quantity'))
         ->groupBy('unit')
-        ->get();
+        ->get()
+        ->map(fn ($row) => [
+            'unit' => $row->unit,
+            'total_quantity' => intval($row->total_quantity),
+        ]);
 
     $inventoryStatusBreakdown = (clone $itemQuery)
         ->select('status', DB::raw('COUNT(*) as total'))
@@ -88,7 +92,7 @@ public function admin_dashboard(Request $request)
         ->map(fn ($requestItem) => [
             'id' => $requestItem->id,
             'description' => $requestItem->item->description ?? 'N/A',
-            'issued_quantity' => $requestItem->issued_quantity ?? $requestItem->quantity,
+            'issued_quantity' => intval($requestItem->issued_quantity ?? $requestItem->quantity),
             'user' => optional($requestItem->request->user)->firstname . ' ' . optional($requestItem->request->user)->lastname,
             'status' => $requestItem->request->status ?? 'Unknown',
             'date' => $requestItem->created_at->format('M d, H:i'),
@@ -107,7 +111,7 @@ public function admin_dashboard(Request $request)
         ->map(fn ($req) => [
             'id' => $req->item_id,
             'description' => $req->item->description ?? 'N/A',
-            'request_count' => $req->request_count,
+            'request_count' => intval($req->request_count),
         ]);
 
     $requestsOverTime = (clone $requestQuery)
@@ -188,7 +192,7 @@ public function user_dashboard()
         ->map(fn($r) => [
             'id' => $r->id,
             'item' => $r->item->description ?? 'N/A',
-            'quantity' => $r->quantity,
+            'quantity' => intval($r->quantity),
             'status' => $r->request->status ?? 'Unknown',
             'date' => $r->created_at?->format('Y-m-d H:i'),
         ]);

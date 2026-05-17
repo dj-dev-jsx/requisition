@@ -372,7 +372,7 @@ const handleDelete = () => {
                   name="office"
                   value={form.office || ""}
                   onChange={handleChange}
-                  placeholder="Enter office location"
+                  placeholder="Enter office"
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
                 />
                 {errors.office && (

@@ -13,6 +13,11 @@ class RIS extends Model
         'issued_by',
         'requested_by',
         'received_by',
+        'issue_date',
+    ];
+
+    protected $casts = [
+        'issue_date' => 'date',
     ];
 
 // Ris.php

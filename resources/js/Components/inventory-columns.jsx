@@ -64,7 +64,9 @@ export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => 
       </div>
     ),
     cell: ({ row }) => {
-      const quantity = row.original.stock_quantity;
+      const quantity = Number.isFinite(Number(row.original.stock_quantity))
+        ? Math.trunc(Number(row.original.stock_quantity))
+        : row.original.stock_quantity;
       let bgColor = "bg-red-100 text-red-700";
       if (quantity > 100) bgColor = "bg-green-100 text-green-700";
       else if (quantity > 50) bgColor = "bg-blue-100 text-blue-700";

@@ -31,6 +31,9 @@ public function requests(Request $request)
               ->orWhereHas('user', function ($q) use ($search) {
                   $q->where('firstname', 'like', "%{$search}%")
                     ->orWhere('lastname', 'like', "%{$search}%");
+              })
+              ->orWhereHas('ris', function ($q) use ($search) {
+                  $q->where('ris_number', 'like', "%{$search}%");
               });
     })
     ->when($month, function ($query) use ($month) {

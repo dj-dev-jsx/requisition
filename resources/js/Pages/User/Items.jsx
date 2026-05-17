@@ -33,6 +33,11 @@ export default function Items({ items, filters }) {
   const [purpose, setPurpose] = useState("");
   const [search, setSearch] = useState(filters.search || "");
 
+  const formatWhole = (value) => {
+    const num = Number(value);
+    return Number.isFinite(num) ? Math.trunc(num) : value;
+  };
+
 const canRequestItem = (item) => {
   return item.stock_quantity > 0 && item.status !== "out_of_stock";
 };
@@ -239,7 +244,7 @@ return (
 
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600">
-                          Available: <span className="font-semibold text-gray-900">{item.stock_quantity} {item.unit}</span>
+                          Available: <span className="font-semibold text-gray-900">{formatWhole(item.stock_quantity)} {item.unit}</span>
                         </span>
                       </div>
 
@@ -308,7 +313,7 @@ return (
                             {item.description}
                           </p>
                           <p className="text-xs text-gray-500 mb-2">
-                            Available: {item.stock_quantity} {item.unit}
+                            Available: {formatWhole(item.stock_quantity)} {item.unit}
                           </p>
 
                           <div className="flex items-center gap-2">
@@ -322,7 +327,7 @@ return (
                             <input
                               type="number"
                               min="1"
-                              max={item.stock_quantity}
+                              max={formatWhole(item.stock_quantity)}
                               value={item.quantity}
                               onChange={(e) =>
                                 updateQuantity(item.id, e.target.value, item.stock_quantity)
@@ -455,7 +460,7 @@ return (
                           <Plus className="h-3 w-3" />
                         </button>
                         <span className="text-xs text-gray-500">
-                          / {item.stock_quantity} {item.unit}
+                          / {formatWhole(item.stock_quantity)} {item.unit}
                         </span>
                       </div>
                     </div>

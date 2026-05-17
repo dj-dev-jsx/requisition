@@ -43,19 +43,32 @@ useEffect(() => {
   const columns = [
     { header: "Request #", accessorKey: "id", id: "id"  },
     { 
+      header: "RIS #", 
+      accessorFn: (row) => row.ris?.ris_number || row.ris_number || "-", 
+      id: "ris_number"
+    },
+    { 
       header: "Requested By", 
       accessorFn: (row) => `${row.user.firstname} ${row.user.lastname}`, 
       id: "user"
     },
     { 
       header: "Status", 
-      accessorFn: (row) => row.status, 
       id: "status",
-      cell: ({ getValue }) => (
-        <Badge className={`px-3 py-1 rounded-full text-sm ${statusColor[getValue()] || ""} capitalize`}>
-          {getValue()}
-        </Badge>
-      )
+      cell: ({ row }) => {
+        const status = row.original.status;
+        const rejectionReason = row.original.rejection_reason;
+        return (
+          <div className="flex flex-col gap-1">
+            <Badge className={`px-3 py-1 rounded-full text-sm w-fit ${statusColor[status] || ""} capitalize`}>
+              {status}
+            </Badge>
+            {status === "rejected" && rejectionReason && (
+              <p className="text-xs text-red-600 italic max-w-xs">{rejectionReason}</p>
+            )}
+          </div>
+        );
+      }
     },
     {
         header: "Purpose",
