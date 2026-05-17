@@ -133,6 +133,25 @@ public function admin_dashboard(Request $request)
             'total' => $row->total,
         ]);
 
+    $topRequestingOfficeRow = Requests::with('user')
+        ->where('requests.created_at', '>=', $startDate)
+        ->when($filters['request_status'] !== 'all', fn ($query) => $query->where('requests.status', $filters['request_status']))
+        ->when($filters['item_status'] !== 'all', fn ($query) =>
+            $query->whereHas('items', fn ($query) =>
+                $query->whereHas('item', fn ($query) => $query->where('status', $filters['item_status']))
+            )
+        )
+        ->join('users', 'requests.user_id', 'users.id')
+        ->select('users.office', DB::raw('COUNT(requests.id) as request_count'))
+        ->groupBy('users.office')
+        ->orderByDesc('request_count')
+        ->first();
+
+    $topRequestingOffice = $topRequestingOfficeRow ? [
+        'office' => $topRequestingOfficeRow->office,
+        'request_count' => intval($topRequestingOfficeRow->request_count),
+    ] : null;
+
     $fulfillmentRate = $totalRequestItems > 0 ? round($totalIssuedQuantity / $totalRequestItems * 100) : 0;
     $restockNeed = $totalItems > 0 ? round($lowStockItems->count() / $totalItems * 100) : 0;
     $topItemShare = $totalRequestItems > 0 ? round((optional($frequentlyRequested->first())['request_count'] ?? 0) / $totalRequestItems * 100) : 0;
@@ -154,6 +173,7 @@ public function admin_dashboard(Request $request)
             'fulfillment_rate' => $fulfillmentRate,
             'restock_need' => $restockNeed,
             'top_item_share' => $topItemShare,
+            'top_requesting_office' => $topRequestingOffice,
         ],
         'filters' => $filters,
         'request_statuses' => $allowedRequestStatuses,

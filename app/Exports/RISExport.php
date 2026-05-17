@@ -35,7 +35,10 @@ class RISExport implements FromCollection, WithHeadings, WithEvents, WithMapping
         $query = RIS::with([
             'request.items.item',
             'request.user',
-        ]);
+        ])
+        ->whereHas('request', function ($query) {
+            $query->where('status', 'processed');
+        });
 
         if ($this->month) {
             $query->whereMonth('created_at', $this->month);

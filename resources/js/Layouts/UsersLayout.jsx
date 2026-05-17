@@ -75,7 +75,7 @@ export default function UsersLayout({ children }) {
           const label = getNotificationLabel(latest);
           setFlashBell(true);
           clearTimeout(flashTimer.current);
-          flashTimer.current = setTimeout(() => setFlashBell(false), 2200);
+          flashTimer.current = setTimeout(() => setFlashBell(false), 1200);
 
           if (latest.data.status === "processed") {
             toast.success(`A request was processed.`);
@@ -127,18 +127,15 @@ export default function UsersLayout({ children }) {
           {/* Navigation */}
           <nav className="flex items-center gap-3 text-sm font-medium">
             <div className="relative">
-              {flashBell && (
-                <span className="absolute left-1/2 top-full -translate-x-1/2 mt-3 w-14 h-14 rounded-full border border-blue-200 opacity-70 animate-ping pointer-events-none" />
-              )}
               <button
                 className={`relative z-10 p-3 rounded-full overflow-visible transition-all duration-300 ${
                   flashBell
-                    ? "scale-105 shadow-[0_0_0_12px_rgba(59,130,246,0.16)]"
-                    : "hover:scale-105"
+                    ? "scale-105 shadow-[0_0_0_18px_rgba(59,130,246,0.16)] ring-2 ring-blue-300/50 animate-pulse bg-blue-50"
+                    : "hover:scale-105 hover:bg-slate-100"
                 }`}
                 onClick={() => setOpenDropdown(!openDropdown)}
               >
-                <Bell className="relative z-10 w-5 h-5 text-gray-600" />
+                <Bell className={`relative z-10 w-5 h-5 ${flashBell ? 'text-blue-700' : 'text-gray-600'}`} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-500 rounded-full">
                     {unreadCount}

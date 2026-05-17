@@ -329,6 +329,32 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
+          {/* TOP REQUESTING OFFICE */}
+          <Card className="rounded-3xl border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle>Top Requesting Office</CardTitle>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="text-sm text-slate-500">Most active office by request volume</div>
+              <div className="rounded-[2rem] bg-slate-50 p-6">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {dashboard.top_requesting_office?.office ?? "N/A"}
+                    </p>
+                    <p className="text-sm text-slate-500 mt-1">
+                      {dashboard.top_requesting_office ? `${dashboard.top_requesting_office.request_count} requests` : "No requests found"}
+                    </p>
+                  </div>
+                  <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-xl">
+                    <Users className="w-7 h-7 text-white" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* QUICK INSIGHTS */}
           <Card className="rounded-3xl border-0 shadow-lg">
             <CardHeader>

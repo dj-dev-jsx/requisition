@@ -75,10 +75,9 @@ export default function AdminLayout({ children }) {
 
         if (newNotifications.length > 0) {
           const latest = newNotifications[0];
-          const label = getNotificationLabel(latest);
           setFlashBell(true);
           clearTimeout(flashTimer.current);
-          flashTimer.current = setTimeout(() => setFlashBell(false), 2200);
+          flashTimer.current = setTimeout(() => setFlashBell(false), 1200);
 
           if (latest.data.status === "processed") {
             toast.success(`A request was processed.`);
@@ -161,7 +160,7 @@ export default function AdminLayout({ children }) {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="flex items-center justify-center w-full p-2.5 rounded-lg text-slate-400 hover:bg-slate-700/50 hover:text-slate-200 transition-all duration-300 border border-slate-700/30"
           >
-            {sidebarOpen ? <ChevronDown className="w-5 h-5 -rotate-90" /> : <ChevronDown className="w-5 h-5 rotate-90" />}
+            {sidebarOpen ? <ChevronDown className="w-5 h-5 rotate-90" /> : <ChevronDown className="w-5 h-5 -rotate-90" />}
           </button>
         </div>
       </aside>
@@ -184,18 +183,15 @@ export default function AdminLayout({ children }) {
           <div className="flex items-center gap-6">
 
             <div className="relative">
-              {flashBell && (
-                <span className="absolute left-1/2 top-full -translate-x-1/2 mt-3 w-16 h-16 rounded-full border-2 border-blue-400 opacity-60 animate-ping pointer-events-none" />
-              )}
               <button
                 className={`relative z-10 p-2.5 rounded-full transition-all duration-300 ${
                   flashBell
-                    ? "scale-110 shadow-lg shadow-blue-500/40 bg-blue-50"
+                    ? "scale-105 shadow-[0_0_0_18px_rgba(59,130,246,0.16)] ring-2 ring-blue-300/50 animate-pulse bg-blue-50"
                     : "hover:bg-slate-100 hover:shadow-md"
                 }`}
                 onClick={() => setOpenDropdown(!openDropdown)}
               >
-                <Bell className="relative z-10 w-6 h-6 text-slate-700" />
+                <Bell className={`relative z-10 w-6 h-6 ${flashBell ? 'text-blue-700' : 'text-slate-700'}`} />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-5 h-5 px-2 text-xs font-bold text-white bg-gradient-to-br from-red-500 to-red-600 rounded-full shadow-lg animate-pulse">
                     {unreadCount > 99 ? "99+" : unreadCount}
