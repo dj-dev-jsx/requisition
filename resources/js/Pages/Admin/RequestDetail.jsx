@@ -31,6 +31,7 @@ export default function RequestDetail() {
   );
 
   const [rejectionReason, setRejectionReason] = useState("");
+  const [issueDate, setIssueDate] = useState(request.ris?.issue_date ?? "");
 
   const isApprovalBlocked = request.items.some(
     (ri) => Number(ri.item.stock_quantity) === 0 || ri.item.status === "out_of_stock"
@@ -47,35 +48,35 @@ export default function RequestDetail() {
     setQuantities((prev) => ({ ...prev, [id]: qty }));
   };
 
-const approveRequest = async () => {
-  if (isApprovalBlocked) {
-    toast.error(
-      "One or more items are out of stock. Please resolve the request before approving."
-    );
-    return;
-  }
-
-  try {
-    const response = await axios.post(
-      `/admin/requests/${request.id}/approve`,
-      {
-        items: quantities,
-      }
-    );
-
-    toast.success("Request approved!");
-
-    if (response.data.print_url) {
-      window.open(response.data.print_url, "_blank");
+  const approveRequest = async () => {
+    if (isApprovalBlocked) {
+      toast.error(
+        "One or more items are out of stock. Please resolve the request before approving."
+      );
+      return;
     }
 
-  } catch (error) {
-    toast.error(
-      error.response?.data?.message ||
-      "Failed to approve request."
-    );
-  }
-};
+    try {
+      const response = await axios.post(
+        `/admin/requests/${request.id}/approve`,
+        {
+          items: quantities,
+          issue_date: issueDate || null,
+        }
+      );
+
+      toast.success("Request approved!");
+
+      if (response.data.print_url) {
+        window.open(response.data.print_url, "_blank");
+      }
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to approve request."
+      );
+    }
+  };
 
   const rejectRequest = () => {
     if (!rejectionReason.trim()) {
@@ -217,12 +218,31 @@ const approveRequest = async () => {
           </Card>
 
           {request.status === "pending" && (
-            <div className="flex flex-col gap-3 justify-end mt-4">
-              {isApprovalBlocked && (
-                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl p-3">
-                  One or more items are out of stock. Approval is blocked until the inventory is restocked.
-                </p>
-              )}
+            <>
+              <Card className="shadow-sm border border-slate-200 bg-white">
+                <CardContent className="p-6">
+                  <div className="grid gap-4 lg:grid-cols-[1fr_1.4fr] items-center">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Issue Date</p>
+                      <input
+                        type="date"
+                        value={issueDate}
+                        onChange={(e) => setIssueDate(e.target.value)}
+                        className="mt-2 w-full max-w-xs rounded-2xl border border-slate-200 px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      />
+                    </div>
+                    <p className="text-sm text-slate-500">
+                      If you leave this blank, the Issue Date in the printable PDF will also remain blank.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="flex flex-col gap-3 justify-end mt-4">
+                {isApprovalBlocked && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-2xl p-3">
+                    One or more items are out of stock. Approval is blocked until the inventory is restocked.
+                  </p>
+                )}
               <div className="flex justify-end gap-3">
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
@@ -305,6 +325,7 @@ const approveRequest = async () => {
                 </AlertDialog>
               </div>
             </div>
+          </>
           )}
         </div>
       </div>

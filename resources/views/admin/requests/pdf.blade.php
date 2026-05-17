@@ -145,10 +145,10 @@
         </tr>
         <tr>
             <td class="text-left">Date :</td>
-            <td>{{ optional($ris->created_at)->format('Y-m-d') ?? '' }}</td>
-            <td>{{ optional($approvedAt)->format('Y-m-d') ?? '' }}</td>
-            <td>{{ optional($ris->updated_at)->format('Y-m-d') ?? '' }}</td>
-            <td>{{ optional($ris->updated_at)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
+            <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
         </tr>
     </table>
 

@@ -1,7 +1,7 @@
 import { Pencil, Trash, Users, Hash, Mail, User } from "lucide-react";
 import { Button } from "./ui/button";
 
-export const columns = (onEdit, onDelete) => [
+export const columns = (onEdit, onAction) => [
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -88,6 +88,22 @@ export const columns = (onEdit, onDelete) => [
     },
   },
   {
+    accessorKey: "is_active",
+    header: ({ column }) => (
+      <div className="font-bold text-gray-700 text-center">Status</div>
+    ),
+    cell: ({ row }) => {
+      const active = row.original.is_active;
+      return (
+        <div className="text-center">
+          <span className={`${active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'} px-3 py-1.5 rounded-full text-xs font-bold shadow-sm inline-block`}>
+            {active ? 'Active' : 'Inactive'}
+          </span>
+        </div>
+      );
+    },
+  },
+  {
     header: ({ column }) => (
       <div className="font-bold text-gray-700 text-center flex items-center justify-center gap-1">
         Actions
@@ -110,11 +126,11 @@ export const columns = (onEdit, onDelete) => [
 
           <Button
             size="sm"
-            onClick={() => onDelete(user.id)}
-            className="flex items-center gap-1.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg px-3 py-1.5 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105"
-            title="Delete this user"
+            onClick={() => onAction(user)}
+            className={`flex items-center gap-1.5 ${user.is_active ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white font-semibold rounded-lg px-3 py-1.5 shadow-md hover:shadow-lg transition-all duration-200 transform hover:scale-105`}
+            title={user.is_active ? 'Deactivate this user' : 'Activate this user'}
           >
-            <Trash className="w-4 h-4" /> Delete
+            {user.is_active ? <Trash className="w-4 h-4" /> : <Users className="w-4 h-4" />} {user.is_active ? 'Deactivate' : 'Activate'}
           </Button>
         </div>
       );

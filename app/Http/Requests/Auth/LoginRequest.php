@@ -31,16 +31,12 @@ public function authenticate(): void
         ]);
     }
 
-    // If password provided, check it (admin or user with password)
-    if ($this->password) {
-        if (! \Illuminate\Support\Facades\Hash::check($this->password, $user->password)) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'password' => __('Invalid password.'),
-            ]);
-        }
+    if ($user->is_active === false) {
+        throw \Illuminate\Validation\ValidationException::withMessages([
+            'username' => __('This account is inactive.'),
+        ]);
     }
 
-    // Log in the user
     \Illuminate\Support\Facades\Auth::login($user);
 }
 

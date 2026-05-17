@@ -56,6 +56,9 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
 
     Route::get('/users', [UsersController::class, 'view_users'])->name('admin.view_users');
     Route::post('/add-user', [UsersController::class, 'addUser'])->name('admin.add_user');
+    Route::put('/users/{user}', [UsersController::class, 'updateUser'])->name('admin.update_user');
+    Route::delete('/users/{user}', [UsersController::class, 'deactivateUser'])->name('admin.deactivate_user');
+    Route::post('/users/{user}/activate', [UsersController::class, 'activateUser'])->name('admin.activate_user');
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
     Route::post('/admin/items/bulk-upload', [InventoryController::class, 'bulkUpload'])->name('admin.bulk_upload_items');

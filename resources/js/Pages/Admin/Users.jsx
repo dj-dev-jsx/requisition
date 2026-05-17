@@ -36,35 +36,36 @@ import {
 export default function Users({ users, roles, filters }) {
     const [search, setSearch] = useState(filters?.search || "");
   const [role, setRole] = useState(filters?.role || "");
+  const [status, setStatus] = useState(filters?.status || "all");
 
   useEffect(() => {
     const delay = setTimeout(() => {
       router.get(
         route("admin.view_users"),
-        { search, role },
+        { search, role, status },
         { preserveState: true, replace: true }
       );
     }, 400);
 
     return () => clearTimeout(delay);
-  }, [search, role]);
+  }, [search, role, status]);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
-  firstName: "",
-  lastName: "",
-  email: "",
-  username: "",
-  office: "",
-  password: "",
-  password_confirmation: "",
-  role: "",
-  admin_password: "",
-  // division: "", // optional
-});
+    firstName: "",
+    lastName: "",
+    email: "",
+    username: "",
+    office: "",
+    password: "",
+    password_confirmation: "",
+    role: "",
+    admin_password: "",
+  });
   const [errors, setErrors] = useState({});
-  const [deleteId, setDeleteId] = useState(null);
-const [editUser, setEditUser] = useState(null);
-const [deleting, setDeleting] = useState(false);
+  const [actionUser, setActionUser] = useState(null);
+  const [actionType, setActionType] = useState("");
+  const [actionPassword, setActionPassword] = useState("");
+  const [processing, setProcessing] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -73,7 +74,13 @@ const [deleting, setDeleting] = useState(false);
 const handleSubmit = (e) => {
   e.preventDefault();
 
-  router.post(route("admin.add_user"), form, {
+  const url = form.id ? route("admin.update_user", form.id) : route("admin.add_user");
+  const method = form.id
+    ? (...args) => router.put(...args)
+    : (...args) => router.post(...args);
+
+  setProcessing(true);
+  method(url, form, {
     onSuccess: () => {
       setOpen(false);
       setForm({
@@ -81,7 +88,7 @@ const handleSubmit = (e) => {
         lastName: "",
         email: "",
         username: "",
-          office: "",
+        office: "",
         password: "",
         password_confirmation: "",
         role: "",
@@ -89,24 +96,29 @@ const handleSubmit = (e) => {
       });
       setErrors({});
 
-      toast.success("User added successfully!", {
-        description: "The user has been created.",
+      toast.success(form.id ? "User updated successfully!" : "User added successfully!", {
+        description: form.id ? "The user has been updated." : "The user has been created.",
       });
     },
 
     onError: (err) => {
       setErrors(err);
 
-      toast.error("Failed to add user", {
+      toast.error(form.id ? "Failed to update user" : "Failed to add user", {
         description: "Please check the form fields.",
       });
     },
+    onFinish: () => setProcessing(false),
   });
 };
 
-const confirmDelete = (id) => {
-  setDeleteId(id);
+const confirmUserAction = (user) => {
+  setActionUser(user);
+  setActionType(user.is_active ? "deactivate" : "activate");
+  setActionPassword("");
+  setErrors({});
 };
+
 const handleEdit = (user) => {
   setForm({
     id: user.id,
@@ -118,28 +130,54 @@ const handleEdit = (user) => {
     password: "",
     password_confirmation: "",
     role: user.role ?? "",
+    admin_password: "",
   });
 
+  setErrors({});
   setOpen(true);
 };
-const handleDelete = () => {
-  if (!deleteId) return;
 
-  const id = deleteId;
-  setDeleting(true);
-  setDeleteId(null);
+const handleAction = () => {
+  if (!actionUser) return;
 
-  router.delete(`/users/${id}`, {
-    onSuccess: () => {
-      toast.success("User deleted successfully!");
-    },
-    onError: () => {
-      toast.error("Failed to delete user.");
-    },
-    onFinish: () => {
-      setDeleting(false);
-    },
-  });
+  setProcessing(true);
+  const url =
+    actionType === "activate"
+      ? route("admin.activate_user", actionUser.id)
+      : route("admin.deactivate_user", actionUser.id);
+
+  if (actionType === "activate") {
+    router.post(url, { admin_password: actionPassword }, {
+      onSuccess: () => {
+        toast.success("User account has been activated.");
+        setActionUser(null);
+        setActionType("");
+        setActionPassword("");
+        setErrors({});
+      },
+      onError: (err) => {
+        setErrors(err);
+        toast.error("Failed to complete user action.");
+      },
+      onFinish: () => setProcessing(false),
+    });
+  } else {
+    router.delete(url, {
+      data: { admin_password: actionPassword },
+      onSuccess: () => {
+        toast.success("User account has been marked inactive.");
+        setActionUser(null);
+        setActionType("");
+        setActionPassword("");
+        setErrors({});
+      },
+      onError: (err) => {
+        setErrors(err);
+        toast.error("Failed to complete user action.");
+      },
+      onFinish: () => setProcessing(false),
+    });
+  }
 };
   return (
     <AdminLayout>
@@ -186,16 +224,28 @@ const handleDelete = () => {
               </span>
             </div>
 
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              className="px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 font-medium"
-            >
-              <option value="">All Roles</option>
-              {roles.map((r) => (
-                <option key={r} value={r}>{r}</option>
-              ))}
-            </select>
+            <div className="grid grid-cols-2 gap-4">
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                className="px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 font-medium"
+              >
+                <option value="">All Roles</option>
+                {roles.map((r) => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="px-5 py-3 rounded-xl border border-gray-200 bg-white shadow-sm hover:shadow-md focus:shadow-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-300 text-gray-900 font-medium"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
           </div>
 
           {/* Table Card with Premium Styling */}
@@ -214,7 +264,7 @@ const handleDelete = () => {
 
             <CardContent className="p-8">
               <div className="overflow-x-auto">
-                <DataTable columns={columns(handleEdit, confirmDelete)} data={users.data} />
+                <DataTable columns={columns(handleEdit, confirmUserAction)} data={users.data} />
               </div>
 
               {/* Modern Pagination */}
@@ -237,7 +287,7 @@ const handleDelete = () => {
                       <Button
                         key={page}
                         onClick={() =>
-                          router.get(route("admin.view_users"), { page, search, role }, { preserveState: true })
+                          router.get(route("admin.view_users"), { page, search, role, status }, { preserveState: true })
                         }
                         className={`px-3 py-2 rounded-lg font-medium transition-all duration-200 ${
                           users.current_page === page
@@ -450,28 +500,28 @@ const handleDelete = () => {
               )}
             </div>
 
-            {/* Admin Password - Only for adding new user */}
-            {!form.id && (
-              <div>
-                <Label htmlFor="admin_password" className="text-base font-semibold text-gray-700 mb-2 block">
-                  Admin Password
-                </Label>
-                <Input
-                  id="admin_password"
-                  type="password"
-                  name="admin_password"
-                  value={form.admin_password || ""}
-                  onChange={handleChange}
-                  placeholder="Enter your admin password to confirm"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
-                />
-                {errors.admin_password && (
-                  <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                    <AlertTriangle className="w-4 h-4" /> {errors.admin_password}
-                  </p>
-                )}
-              </div>
-            )}
+            <div>
+              <Label htmlFor="admin_password" className="text-base font-semibold text-gray-700 mb-2 block">
+                Admin Password
+              </Label>
+              <Input
+                id="admin_password"
+                type="password"
+                name="admin_password"
+                value={form.admin_password || ""}
+                onChange={handleChange}
+                placeholder="Enter your admin password to confirm changes"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+              />
+              <p className="text-sm text-gray-500 mt-2">
+                Admin password is required to add or update a user account.
+              </p>
+              {errors.admin_password && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <AlertTriangle className="w-4 h-4" /> {errors.admin_password}
+                </p>
+              )}
+            </div>
 
             <DialogFooter className="mt-8 pt-6 border-t border-gray-200 flex gap-3">
               <Button
@@ -500,41 +550,62 @@ const handleDelete = () => {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+      <AlertDialog open={!!actionUser} onOpenChange={(open) => {
+        if (!open) {
+          setActionUser(null);
+          setActionType("");
+          setActionPassword("");
+          setErrors({});
+        }
+      }}>
         <AlertDialogContent className="bg-white rounded-2xl shadow-2xl border-0">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-2xl font-bold text-red-600 flex items-center gap-2">
-              <XCircle className="w-6 h-6" /> Delete User
+              <XCircle className="w-6 h-6" /> {actionType === "activate" ? "Activate User" : "Deactivate User"}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-gray-600 text-base mt-2">
-              Are you sure you want to delete this user? This action is permanent and cannot be undone.
+              {actionType === "activate"
+                ? "Enter your admin password to activate this user account."
+                : "Enter your admin password to mark this user account as inactive."}
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-4">
-            <p className="text-sm text-red-700 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
-              <span><span className="font-bold">Warning:</span> This user account will be permanently removed from the system.</span>
-            </p>
+          <div className="mt-4">
+            <Label htmlFor="action_admin_password" className="text-base font-semibold text-gray-700 mb-2 block">
+              Admin Password
+            </Label>
+            <Input
+              id="action_admin_password"
+              type="password"
+              value={actionPassword}
+              onChange={(e) => setActionPassword(e.target.value)}
+              placeholder="Enter admin password"
+              className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+            />
+            {errors.admin_password && (
+              <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                <AlertTriangle className="w-4 h-4" /> {errors.admin_password}
+              </p>
+            )}
           </div>
 
-          <AlertDialogFooter className="flex gap-3">
+          <AlertDialogFooter className="flex gap-3 mt-6">
             <AlertDialogCancel className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold transition-all duration-200">
               Cancel
             </AlertDialogCancel>
 
             <AlertDialogAction
-              onClick={handleDelete}
-              disabled={deleting}
+              onClick={handleAction}
+              disabled={processing || !actionPassword}
               className="px-6 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center"
             >
-              {deleting ? (
+              {processing ? (
                 <>
-                  <Loader className="w-4 h-4 animate-spin" /> Deleting...
+                  <Loader className="w-4 h-4 animate-spin" /> Working...
                 </>
               ) : (
                 <>
-                  <XCircle className="w-4 h-4" /> Yes, Delete
+                  <XCircle className="w-4 h-4" /> Confirm
                 </>
               )}
             </AlertDialogAction>
