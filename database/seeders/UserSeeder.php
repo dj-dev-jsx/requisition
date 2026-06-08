@@ -17,9 +17,9 @@ class UserSeeder extends Seeder
 
         // Admin
         $admin = User::create([
-            'firstname' => 'System',
-            'lastname' => 'Administrator',
-            'middlename' => '',
+            'firstname' => 'Mark Joseph',
+            'lastname' => 'Limon',
+            'middlename' => 'M',
             'email' => 'admin@gmail.com',
             'username'=> 'admin',
             'office' => 'Supply Office',
@@ -31,28 +31,12 @@ class UserSeeder extends Seeder
         // Requesters (with division_id)
         $requesters = [
             [
-                'firstname' => 'Juan',
-                'lastname' => 'Dela Cruz',
+                'firstname' => 'Mark Joseph',
+                'lastname' => 'Limon',
                 'middlename' => 'M.',
-                'username' => 'jdelacruz',
-                'office' => 'Records Office',
-                'email' => 'juan.delacruz@email.com',
-            ],
-            [
-                'firstname' => 'Ana',
-                'lastname' => 'Reyes',
-                'middlename' => 'S.',
-                'username' => 'areyes',
-                'office' => 'Accounting Office',
-                'email' => 'ana.reyes@email.com',
-            ],
-            [
-                'firstname' => 'Carlos',
-                'lastname' => 'Tan',
-                'middlename' => 'G.',
-                'username' => 'ctan',
-                'office' => 'ICT Office',
-                'email' => 'carlos.tan@email.com',
+                'username' => 'emjay',
+                'office' => 'Supply Office',
+                'email' => 'mark.joseph.limon@gmail.com',
             ],
         ];
 

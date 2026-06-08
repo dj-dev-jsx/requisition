@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Link, router, usePage } from "@inertiajs/react";
-import { Home, Users, Settings, LogOut, BoxesIcon, ClipboardIcon, Bell, User, CheckCircle, XCircle, ChevronDown, Menu, X } from "lucide-react";
+import { Home, Users, Settings, LogOut, BoxesIcon, ClipboardIcon, Bell, User, CheckCircle, XCircle, ChevronDown, Menu, X, Database } from "lucide-react";
 import { Toaster, toast } from "sonner";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns";
@@ -144,6 +144,10 @@ export default function AdminLayout({ children }) {
           <Link href={route("admin.profile")} className={navLink("admin.profile")}>
             <User className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" />
             {sidebarOpen && <span className="font-semibold text-sm">Profile</span>}
+          </Link>
+          <Link href={route("admin.database")} className={navLink("admin.database")}>
+            <Database className="w-5 h-5 flex-shrink-0 transition-transform group-hover:scale-110" />
+            {sidebarOpen && <span className="font-semibold text-sm">Database</span>}
           </Link>
         </nav>
 

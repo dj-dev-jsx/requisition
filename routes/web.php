@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DatabaseController;
 use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\RequestsController;
 use App\Http\Controllers\Admin\UsersController;
@@ -62,6 +63,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/settings', [LoginController::class, 'settings'])->name('admin.settings');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('admin.profile');
     Route::post('/admin/items/bulk-upload', [InventoryController::class, 'bulkUpload'])->name('admin.bulk_upload_items');
+    
+    // Database export/import
+    Route::get('/database', [DatabaseController::class, 'view'])->name('admin.database');
+    Route::get('/database/export', [DatabaseController::class, 'export'])->name('admin.database.export');
+    Route::post('/database/import', [DatabaseController::class, 'import'])->name('admin.database.import');
 });
 
 Route::middleware(['auth', 'role:user'])->prefix('user')->group(function () {
