@@ -119,9 +119,20 @@ export default function UsersLayout({ children }) {
               alt="Logo"
               className="h-9 w-auto"
             />
-            <span className="font-semibold text-gray-700 text-lg hidden sm:block">
-              Requisition
-            </span>
+            <div className="flex flex-col max-w-xs sm:max-w-md md:max-w-lg">
+              <span
+                className="font-semibold text-gray-800 text-lg truncate"
+                title="Project RISE: A requisition and Inventory System for Efficient Schools Division Office Operations"
+              >
+                Project RISE
+              </span>
+              <span
+                className="text-sm text-gray-600 truncate hidden sm:block"
+                title="Project RISE: A requisition and Inventory System for Efficient Schools Division Office Operations"
+              >
+                A Requisition &amp; Inventory System for Efficient Schools Division Office Operations
+              </span>
+            </div>
           </div>
 
           {/* Navigation */}

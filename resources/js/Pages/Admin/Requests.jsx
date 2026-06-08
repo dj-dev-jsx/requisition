@@ -131,7 +131,7 @@ useEffect(() => {
               }}
               className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white shadow-lg hover:shadow-xl rounded-lg px-6 py-3 font-semibold transition-all duration-300 transform hover:scale-105"
             >
-              <Printer className="w-5 h-5" /> Export RIS
+              <Printer className="w-5 h-5" /> Export RSMI
             </Button>
           </div>
 

@@ -1,7 +1,7 @@
 import { Pencil, Trash, PlusCircle, Package, BarChart3, Scale, AlertCircle, CheckCircle2, XCircle, Hash } from "lucide-react";
 import { Button } from "./ui/button";
 
-export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => [
+export const getInventoryColumns = (handleEdit, handleDelete, handleRestock, handleImageClick) => [
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -44,14 +44,18 @@ export const getInventoryColumns = (handleEdit, handleDelete, handleRestock) => 
         : "/placeholder.png";
       return (
         <div className="flex justify-center">
-          <div className="relative group">
+          <button
+            type="button"
+            onClick={() => handleImageClick(imageUrl)}
+            className="relative group cursor-pointer focus:outline-none"
+          >
             <img
               src={imageUrl}
               alt="Item"
               className="w-14 h-14 object-cover rounded-xl shadow-md group-hover:shadow-xl transition-all duration-200 ring-2 ring-gray-200 group-hover:ring-blue-400"
             />
             <div className="absolute inset-0 rounded-xl bg-black opacity-0 group-hover:opacity-10 transition-opacity"></div>
-          </div>
+          </button>
         </div>
       );
     },

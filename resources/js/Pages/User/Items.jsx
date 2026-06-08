@@ -2,6 +2,13 @@ import UsersLayout from "@/Layouts/UsersLayout";
 import { Head, router } from "@inertiajs/react";
 import { useEffect, useState } from "react";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -32,6 +39,8 @@ export default function Items({ items, filters }) {
   const [loading, setLoading] = useState(false);
   const [purpose, setPurpose] = useState("");
   const [search, setSearch] = useState(filters.search || "");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItem, setPreviewItem] = useState(null);
 
   const formatWhole = (value) => {
     const num = Number(value);
@@ -163,6 +172,12 @@ const handleSearch = (value) => {
     }
   );
 };
+
+const handlePreviewImage = (item) => {
+  setPreviewItem(item);
+  setPreviewOpen(true);
+};
+
 useEffect(() => {
   const delay = setTimeout(() => {
     router.get(
@@ -180,21 +195,21 @@ useEffect(() => {
 return (
   <UsersLayout>
     <Head title="Items" />
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-3 sm:p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-1 sm:mb-2">
             Browse Items
           </h1>
-          <p className="text-gray-600">
+          <p className="text-xs sm:text-sm md:text-base text-gray-600">
             Select items you need and submit a requisition request
           </p>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-8">
-          <div className="relative max-w-md">
+        <div className="mb-6 sm:mb-8">
+          <div className="relative w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
@@ -207,10 +222,10 @@ return (
         </div>
 
         {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 pb-96 sm:pb-0 w-full">
           {/* Items Grid */}
-          <div className="lg:col-span-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="w-full lg:col-span-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full">
               {items.map((item) => {
                 const stockStatus = getStockStatus(item);
                 const StatusIcon = stockStatus.icon;
@@ -218,31 +233,37 @@ return (
                 return (
                   <div
                     key={item.id}
-                    onClick={() => {
-                      if (canRequestItem(item)) addItem(item);
-                    }}
-                    className={`group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-blue-300 transition-all duration-300 cursor-pointer ${
-                      !canRequestItem(item) ? "opacity-60 cursor-not-allowed" : ""
+                    className={`group bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-xl hover:border-blue-300 transition-all duration-300 ${
+                      !canRequestItem(item) ? "opacity-60" : ""
                     }`}
                   >
-                    <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4 relative">
-                      <img
-                        src={getImageUrl(item.image)}
-                        alt={item.name}
-                        className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className={`absolute top-3 right-3 px-2 py-1 rounded-full text-xs font-medium border ${stockStatus.color} flex items-center gap-1`}>
+                    <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-2 sm:p-3 md:p-4 relative overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handlePreviewImage(item);
+                        }}
+                        className="h-full w-full flex items-center justify-center group-hover:scale-105 transition-transform duration-300"
+                      >
+                        <img
+                          src={getImageUrl(item.image)}
+                          alt={item.description}
+                          className="h-full w-full object-contain"
+                        />
+                      </button>
+                      <div className={`absolute top-2 sm:top-3 right-2 sm:right-3 px-2 py-1 rounded-full text-xs font-medium border ${stockStatus.color} flex items-center gap-1`}>
                         <StatusIcon className="h-3 w-3" />
                         {stockStatus.label}
                       </div>
                     </div>
 
-                    <div className="p-4 space-y-3">
-                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
+                    <div className="p-2.5 sm:p-3 md:p-4 space-y-2 sm:space-y-3">
+                      <h3 className="text-xs sm:text-sm font-semibold text-gray-900 line-clamp-2 leading-tight">
                         {item.description}
                       </h3>
 
-                      <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center justify-between text-xs sm:text-sm">
                         <span className="text-gray-600">
                           Available: <span className="font-semibold text-gray-900">{formatWhole(item.stock_quantity)} {item.unit}</span>
                         </span>
@@ -254,7 +275,7 @@ return (
                           e.stopPropagation();
                           addItem(item);
                         }}
-                        className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-medium transition-all duration-200 ${
+                        className={`w-full flex items-center justify-center gap-2 py-2 sm:py-2.5 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-medium transition-all duration-200 ${
                           !canRequestItem(item)
                             ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                             : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
@@ -262,12 +283,12 @@ return (
                       >
                         {!canRequestItem(item) ? (
                           <>
-                            <XCircle className="h-4 w-4" />
+                            <XCircle className="h-3.5 w-3.5" />
                             Unavailable
                           </>
                         ) : (
                           <>
-                            <Plus className="h-4 w-4" />
+                            <Plus className="h-3.5 w-3.5" />
                             Add to Request
                           </>
                         )}
@@ -279,44 +300,69 @@ return (
             </div>
           </div>
 
+          <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+            <DialogContent className="sm:max-w-2xl w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border-0">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold text-slate-900">Preview Item Image</DialogTitle>
+              </DialogHeader>
+              <div className="mt-4">
+                <img
+                  src={previewItem ? getImageUrl(previewItem.image) : "/img/placeholder.png"}
+                  alt={previewItem?.description || "Item Preview"}
+                  className="w-full h-auto max-h-[70vh] object-contain rounded-3xl border border-slate-200 shadow-lg"
+                />
+                <p className="mt-4 text-sm text-gray-600">{previewItem?.description}</p>
+              </div>
+              <DialogFooter className="mt-6 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  className="px-4 py-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
+                >
+                  Close
+                </button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           {/* Desktop Summary */}
           <div className="lg:col-span-4">
-            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 sticky top-6">
-              <div className="flex items-center gap-3 mb-6">
-                <ShoppingCart className="h-6 w-6 text-blue-600" />
-                <h2 className="text-xl font-semibold text-gray-900">
+            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-4 sm:p-5 md:p-6 sticky top-4 md:top-6 max-h-[calc(100vh-2rem)] overflow-y-auto">
+              <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                <ShoppingCart className="h-5 sm:h-6 w-5 sm:w-6 text-blue-600" />
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                   Request Summary
                 </h2>
               </div>
 
               {selectedItems.length === 0 ? (
-                <div className="text-center py-12">
-                  <Package className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">No items selected yet</p>
-                  <p className="text-sm text-gray-400 mt-1">Click on items to add them</p>
+                <div className="text-center py-8 sm:py-12">
+                  <Package className="h-10 sm:h-12 w-10 sm:w-12 text-gray-300 mx-auto mb-3 sm:mb-4" />
+                  <p className="text-xs sm:text-sm text-gray-500">No items selected yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Click on items to add them</p>
                 </div>
               ) : (
                 <>
-                  <div className="space-y-4 max-h-96 overflow-y-auto mb-6">
+                  <div className="space-y-3 sm:space-y-4 max-h-80 sm:max-h-96 overflow-y-auto mb-4 sm:mb-6">
                     {selectedItems.map((item) => (
                       <div
                         key={item.id}
-                        className="flex items-center gap-4 border border-gray-200 rounded-xl p-4 hover:bg-gray-50 transition-colors"
+                        className="flex gap-2 sm:gap-4 border border-gray-200 rounded-xl p-2 sm:p-4 hover:bg-gray-50 transition-colors"
                       >
                         <img
                           src={getImageUrl(item.image)}
-                          className="h-16 w-16 object-contain rounded-lg border border-gray-200 bg-white"
+                          className="h-14 sm:h-16 w-14 sm:w-16 object-contain rounded-lg border border-gray-200 bg-white flex-shrink-0"
                         />
 
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-2">
+                          <p className="text-xs sm:text-sm font-medium text-gray-900 line-clamp-2 mb-1 sm:mb-2">
                             {item.description}
                           </p>
-                          <p className="text-xs text-gray-500 mb-2">
+                          <p className="text-xs text-gray-500 mb-1 sm:mb-2">
                             Available: {formatWhole(item.stock_quantity)} {item.unit}
                           </p>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1 sm:gap-2">
                             <button
                               onClick={() => decreaseQty(item)}
                               className="p-1 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
@@ -332,7 +378,7 @@ return (
                               onChange={(e) =>
                                 updateQuantity(item.id, e.target.value, item.stock_quantity)
                               }
-                              className="w-16 text-center border border-gray-300 rounded-md py-1 text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                              className="w-12 sm:w-16 text-center border border-gray-300 rounded-md py-1 text-xs sm:text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                             />
 
                             <button
@@ -350,7 +396,7 @@ return (
 
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-md transition-colors flex-shrink-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -358,16 +404,16 @@ return (
                     ))}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                         Purpose of Request
                       </label>
                       <textarea
                         value={purpose}
                         onChange={(e) => setPurpose(e.target.value)}
                         placeholder="Please describe why you need these items..."
-                        className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 resize-none"
+                        className="w-full border border-gray-300 rounded-lg p-2.5 sm:p-3 text-xs sm:text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 resize-none"
                         rows={3}
                       />
                     </div>
@@ -375,14 +421,14 @@ return (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <button
-                          className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
+                          className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm sm:text-base font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm hover:shadow-md"
                         >
                           <Send className="h-4 w-4" />
                           Submit Request ({selectedItems.reduce((total, item) => total + item.quantity, 0)} items)
                         </button>
                       </AlertDialogTrigger>
 
-                      <AlertDialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-6">
+                      <AlertDialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-4 sm:p-6">
                         <AlertDialogHeader>
                           <AlertDialogTitle className="flex items-center gap-2">
                             <Send className="h-5 w-5 text-green-600" />
@@ -417,45 +463,45 @@ return (
 
         {/* Mobile Floating Summary */}
         {selectedItems.length > 0 && (
-          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 max-h-[80vh] overflow-hidden">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-3">
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl z-50 max-h-[70vh] sm:max-h-[75vh] overflow-hidden">
+            <div className="p-3 sm:p-4">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5 text-blue-600" />
-                  <p className="text-sm font-medium text-gray-900">
+                  <ShoppingCart className="h-4 sm:h-5 w-4 sm:w-5 text-blue-600" />
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">
                     {selectedItems.reduce((total, item) => total + item.quantity, 0)} item(s) selected
                   </p>
                 </div>
               </div>
 
               {/* Selected Items List */}
-              <div className="max-h-48 overflow-y-auto mb-3 space-y-2">
+              <div className="max-h-32 sm:max-h-40 overflow-y-auto mb-2 sm:mb-3 space-y-2">
                 {selectedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center gap-3 border border-gray-200 rounded-lg p-2 bg-gray-50"
+                    className="flex items-center gap-2 border border-gray-200 rounded-lg p-2 bg-gray-50"
                   >
                     <img
                       src={getImageUrl(item.image)}
-                      className="h-10 w-10 object-contain rounded border bg-white"
+                      className="h-8 sm:h-10 w-8 sm:w-10 object-contain rounded border bg-white flex-shrink-0"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-medium text-gray-900 line-clamp-1">
                         {item.description}
                       </p>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1 mt-1">
                         <button
                           onClick={() => decreaseQty(item)}
-                          className="p-1 bg-gray-200 hover:bg-gray-300 rounded text-xs transition-colors"
+                          className="p-0.5 bg-gray-200 hover:bg-gray-300 rounded text-xs transition-colors"
                         >
                           <Minus className="h-3 w-3" />
                         </button>
-                        <span className="text-xs font-medium min-w-[20px] text-center">
+                        <span className="text-xs font-medium min-w-[16px] text-center">
                           {item.quantity}
                         </span>
                         <button
                           onClick={() => increaseQty(item)}
-                          className="p-1 bg-gray-200 hover:bg-gray-300 rounded text-xs transition-colors"
+                          className="p-0.5 bg-gray-200 hover:bg-gray-300 rounded text-xs transition-colors"
                         >
                           <Plus className="h-3 w-3" />
                         </button>
@@ -466,7 +512,7 @@ return (
                     </div>
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0"
                     >
                       <Trash2 className="h-3 w-3" />
                     </button>
@@ -478,19 +524,19 @@ return (
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
                 placeholder="Purpose of request..."
-                className="w-full border border-gray-300 rounded-lg p-3 text-sm mb-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 resize-none"
+                className="w-full border border-gray-300 rounded-lg p-2 sm:p-3 text-xs sm:text-sm mb-2 sm:mb-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 resize-none"
                 rows={2}
               />
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <button className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-3 px-4 rounded-xl font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
+                  <button className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-sm font-medium hover:from-green-600 hover:to-green-700 transition-all duration-200 flex items-center justify-center gap-2 shadow-sm">
                     <Send className="h-4 w-4" />
                     Submit Request
                   </button>
                 </AlertDialogTrigger>
 
-                <AlertDialogContent className="sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-6">
+                <AlertDialogContent className="w-[90vw] sm:max-w-md bg-white border border-gray-200 shadow-2xl rounded-2xl p-4 sm:p-6">
                   <AlertDialogHeader>
                     <AlertDialogTitle className="flex items-center gap-2">
                       <Send className="h-5 w-5 text-green-600" />

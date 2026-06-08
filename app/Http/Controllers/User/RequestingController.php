@@ -20,7 +20,15 @@ public function user_items(Request $request)
 
     $items = Items::when($search, function ($query, $search) {
         $query->where('description', 'like', "%{$search}%");
-    })->get();
+    })
+    ->orderByRaw("
+        CASE 
+            WHEN status = 'out_of_stock' OR stock_quantity = 0 THEN 3
+            WHEN status = 'low_stock' OR stock_quantity <= 5 THEN 2
+            ELSE 1
+        END ASC
+    ")
+    ->get();
 
     return inertia('User/Items', [
         'items' => $items,

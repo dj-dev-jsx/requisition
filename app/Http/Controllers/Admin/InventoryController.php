@@ -27,6 +27,13 @@ public function items(Request $request)
               ->orWhere('id', 'like', "%{$search}%");
         });
     })
+    ->orderByRaw("
+        CASE 
+            WHEN status = 'out_of_stock' OR stock_quantity = 0 THEN 3
+            WHEN status = 'low_stock' OR stock_quantity <= 5 THEN 2
+            ELSE 1
+        END ASC
+    ")
     ->orderBy('created_at', 'asc')
     ->paginate(10) // <-- number of items per page
     ->withQueryString(); // <-- preserves search/filter query
@@ -122,6 +129,13 @@ public function update(Request $request, $id)
     return redirect()->route('admin.inventory')->with('success', 'Item updated!');
 }
 
+public function destroy($id)
+{
+    $item = Items::findOrFail($id);
+    $item->delete();
+
+    return redirect()->route('admin.inventory')->with('success', 'Item deleted successfully!');
+}
 
 public function showRequest(Requests $request)
 {

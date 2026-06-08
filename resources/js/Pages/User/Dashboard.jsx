@@ -24,7 +24,7 @@ export default function Dashboard({ dashboard, user }) {
               Welcome back, {user.firstname}!
             </h1>
             <p className="text-lg md:text-xl text-gray-600">
-              Here's an overview of your requisition requests
+              Here's an overview of your requests
             </p>
           </div>
 

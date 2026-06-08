@@ -47,6 +47,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::post('/add-item', [InventoryController::class, 'addItem'])->name('admin.add_item');
     Route::post('/restock-item', [InventoryController::class, 'restock'])->name('admin.restock_item');
     Route::put('/admin/items/{item}', [InventoryController::class, 'update'])->name('admin.update_item');
+    Route::delete('/admin/items/{item}', [InventoryController::class, 'destroy'])->name('admin.delete_item');
     Route::get('/requests', [RequestsController::class, 'requests'])->name('admin.requests');
     Route::get('/requests/{request}', [InventoryController::class, 'showRequest'])->name('admin.requests.show');
     Route::post('/requests/{request}/approve', [InventoryController::class, 'approve'])->name('admin.requests.approve');

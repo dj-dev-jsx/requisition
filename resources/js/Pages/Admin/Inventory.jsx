@@ -40,7 +40,7 @@ export default function Inventory({ }) {
   stock_quantity: 0,
   unit: "",
 });
-const { items, filters } = usePage().props;
+const { items, filters, flash } = usePage().props;
 
 const [search, setSearch] = useState(filters?.search || "");
 
@@ -61,8 +61,27 @@ useEffect(() => {
 
 const [deleteId, setDeleteId] = useState(null);
 const [deleting, setDeleting] = useState(false);
+const [feedbackMessage, setFeedbackMessage] = useState("");
+const [feedbackType, setFeedbackType] = useState("success");
+const [previewImageOpen, setPreviewImageOpen] = useState(false);
+const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (flash?.success) {
+      setFeedbackType("success");
+      setFeedbackMessage(flash.success);
+    } else if (flash?.error) {
+      setFeedbackType("error");
+      setFeedbackMessage(flash.error);
+    }
+  }, [flash]);
+
+  const handleImagePreview = (imageUrl) => {
+    setPreviewImageUrl(imageUrl);
+    setPreviewImageOpen(true);
+  };
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -133,12 +152,15 @@ const handleDelete = () => {
   setDeleting(true);
   setDeleteId(null);
 
-  router.delete(`/items/${id}`, {
+  router.delete(route("admin.delete_item", id), {
     onSuccess: () => {
       toast.success("Item deleted successfully!");
     },
     onError: () => {
+      setFeedbackType("error");
+      setFeedbackMessage("Failed to delete item.");
       toast.error("Failed to delete item.");
+      setTimeout(() => setFeedbackMessage(""), 5000);
     },
     onFinish: () => {
       setDeleting(false);
@@ -185,7 +207,7 @@ const handleDelete = () => {
   );
 };
 
-  const columns = getInventoryColumns(handleEdit, confirmDelete, handleRestock);
+  const columns = getInventoryColumns(handleEdit, confirmDelete, handleRestock, handleImagePreview);
 
   const getPaginationPages = () => {
     const current = items.current_page;
@@ -266,6 +288,25 @@ const [uploading, setUploading] = useState(false);
                 </Button>
             </div>
           </div>
+
+          {feedbackMessage && (
+            <div className={`rounded-2xl border px-6 py-4 mb-6 ${
+              feedbackType === "success"
+                ? "border-green-200 bg-green-50 text-green-900"
+                : "border-red-200 bg-red-50 text-red-900"
+            }`}>
+              <div className="flex items-center justify-between gap-4">
+                <p className="font-medium">{feedbackMessage}</p>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackMessage("")}
+                  className="text-sm font-semibold underline underline-offset-2"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Search Bar with Modern Styling */}
           <div className="flex items-center gap-4">
@@ -608,6 +649,30 @@ const [uploading, setUploading] = useState(false);
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={previewImageOpen} onOpenChange={setPreviewImageOpen}>
+        <DialogContent className="sm:max-w-xl w-full bg-white rounded-3xl shadow-2xl p-6 sm:p-8 border-0">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-slate-900">Item Image Preview</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <img
+              src={previewImageUrl}
+              alt="Preview"
+              className="w-full h-auto max-h-[70vh] object-contain rounded-3xl border border-slate-200 shadow-lg"
+            />
+          </div>
+          <DialogFooter className="mt-6 flex justify-end">
+            <Button
+              type="button"
+              onClick={() => setPreviewImageOpen(false)}
+              className="px-5 py-2.5 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200"
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={bulkOpen} onOpenChange={setBulkOpen}>
   <DialogContent className="sm:max-w-md w-full bg-white rounded-2xl shadow-2xl p-8">

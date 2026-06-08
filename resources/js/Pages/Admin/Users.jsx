@@ -527,15 +527,21 @@ const handleAction = () => {
               <Button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold transition-all duration-200"
+                disabled={processing}
+                className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                className="px-6 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2"
+                disabled={processing}
+                className="px-6 py-2.5 rounded-lg bg-purple-600 text-white hover:bg-purple-700 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
               >
-                {form.id ? (
+                {processing ? (
+                  <>
+                    <Loader className="w-4 h-4 animate-spin" /> Saving...
+                  </>
+                ) : form.id ? (
                   <>
                     <Save className="w-4 h-4" /> Update User
                   </>
