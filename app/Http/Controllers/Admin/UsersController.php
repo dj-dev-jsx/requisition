@@ -48,6 +48,7 @@ class UsersController extends Controller
                 'email' => $user->email,
                 'username' => $user->username,
                 'office' => $user->office,
+                'designation' => $user->designation,
                 'role' => $user->roles->pluck('name')->first() ?? '',
                 'is_active' => $user->is_active ?? true,
             ];
@@ -71,6 +72,7 @@ class UsersController extends Controller
             'lastName' => 'required|string|max:50',
             'email' => 'required|email|unique:users,email',
             'office' => 'required|string|max:100',
+            'designation' => 'nullable|string|max:100',
             'username' => 'required|string|unique:users,username|max:30',
             'password' => 'required|string|min:6|confirmed',
             'role' => 'required|string|exists:roles,name',
@@ -87,6 +89,7 @@ class UsersController extends Controller
             'email' => $validated['email'],
             'username' => $validated['username'],
             'office' => $validated['office'],
+            'designation' => $validated['designation'] ?? null,
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -102,6 +105,7 @@ class UsersController extends Controller
             'lastName' => 'required|string|max:50',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'office' => 'required|string|max:100',
+            'designation' => 'nullable|string|max:100',
             'username' => 'required|string|unique:users,username,' . $user->id . '|max:30',
             'password' => 'nullable|string|min:6|confirmed',
             'role' => 'required|string|exists:roles,name',
@@ -117,6 +121,7 @@ class UsersController extends Controller
         $user->email = $validated['email'];
         $user->username = $validated['username'];
         $user->office = $validated['office'];
+        $user->designation = $validated['designation'] ?? null;
 
         if (!empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);

@@ -33,12 +33,17 @@
     </div>
 
     @php
-        $issuedByName = $ris->issuedBy ? trim($ris->issuedBy->firstname.' '.$ris->issuedBy->middlename.' '.$ris->issuedBy->lastname) : '';
-        $issuedByPosition = $ris->issuedBy->office ?? '';
-        $requestedByName = $ris->requestedBy ? trim($ris->requestedBy->firstname.' '.$ris->requestedBy->middlename.' '.$ris->requestedBy->lastname) : '';
-        $requestedByPosition = $ris->requestedBy->office ?? '';
-        $receivedByName = $ris->receivedBy ? trim($ris->receivedBy->firstname.' '.$ris->receivedBy->middlename.' '.$ris->receivedBy->lastname) : '';
-        $receivedByPosition = $ris->receivedBy->office ?? '';
+        $issuedBy = $ris->issuedBy;
+        $requestedBy = $ris->requestedBy;
+        $receivedBy = $ris->receivedBy;
+        $issuedByOffice = $issuedBy?->office ?? '';
+        $requestedByOffice = $requestedBy?->office ?? '';
+        $issuedByName = $issuedBy ? trim($issuedBy->firstname.' '.$issuedBy->middlename.' '.$issuedBy->lastname) : '';
+        $issuedByPosition = $issuedBy?->designation ?? '';
+        $requestedByName = $requestedBy ? trim($requestedBy->firstname.' '.$requestedBy->middlename.' '.$requestedBy->lastname) : '';
+        $requestedByPosition = $requestedBy?->designation ?? '';
+        $receivedByName = $receivedBy ? trim($receivedBy->firstname.' '.$receivedBy->middlename.' '.$receivedBy->lastname) : '';
+        $receivedByPosition = $receivedBy?->designation ?? '';
         $purpose = $ris->purpose ?? 'Purpose is not specified';
     @endphp
         {{-- Top Info --}}
@@ -64,7 +69,7 @@
         </tr>
         <tr class="with-border">
             <td colspan="4" style="border-top:none;border-bottom:none;">
-                Office: <span class="underline font-semibold">{{ $requestedByPosition }}</span>
+                Office: <span class="underline font-semibold">{{ $requestedByOffice }}</span>
             </td>
             <td colspan="4" style="border-top:none;border-bottom:none;">
                 RIS No.: <span class="underline font-semibold">{{ $risNumber }}</span>
@@ -138,10 +143,10 @@
         </tr>
         <tr>
             <td class="text-left">Designation :</td>
-            <td></td>
+            <td>{{ $requestedByPosition }}</td>
             <td>Supply Officer</td>
-            <td></td>
-            <td></td>
+            <td>{{ $issuedByPosition }}</td>
+            <td>{{ $receivedByPosition }}</td>
         </tr>
         <tr>
             <td class="text-left">Date :</td>

@@ -56,6 +56,7 @@ export default function Users({ users, roles, filters }) {
     email: "",
     username: "",
     office: "",
+    designation: "",
     password: "",
     password_confirmation: "",
     role: "",
@@ -89,6 +90,7 @@ const handleSubmit = (e) => {
         email: "",
         username: "",
         office: "",
+        designation: "",
         password: "",
         password_confirmation: "",
         role: "",
@@ -127,6 +129,7 @@ const handleEdit = (user) => {
     email: user.email,
     username: user.username,
     office: user.office,
+    designation: user.designation || "",
     password: "",
     password_confirmation: "",
     role: user.role ?? "",
@@ -314,7 +317,7 @@ const handleAction = () => {
         </div>
       </div>
 <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-3xl w-full bg-white rounded-2xl shadow-2xl p-8 border-0">
+        <DialogContent className="sm:max-w-4xl max-h-[95vh] w-full overflow-y-auto bg-white rounded-2xl shadow-2xl p-6 sm:p-8 border-0">
           <DialogHeader className="mb-6">
             <DialogTitle className="text-2xl font-bold text-purple-700 flex items-center gap-2">
               {form.id ? (
@@ -431,6 +434,25 @@ const handleAction = () => {
                   </p>
                 )}
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="designation" className="text-base font-semibold text-gray-700 mb-2 block">
+                Designation
+              </Label>
+              <Input
+                id="designation"
+                name="designation"
+                value={form.designation || ""}
+                onChange={handleChange}
+                placeholder="Enter current position/designation"
+                className="w-full px-4 py-3 rounded-xl border border-gray-300 bg-gray-50 text-gray-900 placeholder-gray-400 focus:bg-white focus:ring-2 focus:ring-purple-400 focus:border-transparent outline-none transition-all duration-200 shadow-sm"
+              />
+              {errors.designation && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <AlertTriangle className="w-4 h-4" /> {errors.designation}
+                </p>
+              )}
             </div>
 
             {/* Password & Confirm Password */}

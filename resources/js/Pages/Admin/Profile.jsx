@@ -19,6 +19,7 @@ export default function Profile({ mustVerifyEmail, status }) {
     username: user.username || "",
     email: user.email || "",
     office: user.office || "",
+    designation: user.designation || "",
     profile_image: null,
   });
 
@@ -227,6 +228,22 @@ export default function Profile({ mustVerifyEmail, status }) {
                     />
                     {errors.office && (
                       <p className="text-sm text-red-600">{errors.office}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="designation" className="text-sm font-medium text-slate-700">
+                      Designation
+                    </Label>
+                    <Input
+                      id="designation"
+                      value={data.designation}
+                      onChange={(e) => setData("designation", e.target.value)}
+                      placeholder="Enter your current position"
+                      className="w-full border-slate-200 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    {errors.designation && (
+                      <p className="text-sm text-red-600">{errors.designation}</p>
                     )}
                   </div>
                 </div>
