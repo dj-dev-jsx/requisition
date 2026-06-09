@@ -30,7 +30,9 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
-  Send
+  Send,
+  FileText,
+  Layers3,
 } from "lucide-react";
 
 
@@ -38,6 +40,7 @@ export default function Items({ items, filters }) {
   const [selectedItems, setSelectedItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [purpose, setPurpose] = useState("");
+  const [activeTab, setActiveTab] = useState("browse");
   const [search, setSearch] = useState(filters.search || "");
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewItem, setPreviewItem] = useState(null);
@@ -178,21 +181,32 @@ const handlePreviewImage = (item) => {
   setPreviewOpen(true);
 };
 
-useEffect(() => {
-  const delay = setTimeout(() => {
-    router.get(
-      route("user.items"),
-      { search },
-      {
-        preserveState: true,
-        replace: true,
-      }
-    );
-  }, 400);
+  const summaryItems = items.map((item) => {
+    const stockStatus = getStockStatus(item);
 
-  return () => clearTimeout(delay);
-}, [search]);
-return (
+    return {
+      ...item,
+      stockLabel: stockStatus.label,
+      stockTone: stockStatus.color,
+    };
+  });
+
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      router.get(
+        route("user.items"),
+        { search },
+        {
+          preserveState: true,
+          replace: true,
+        }
+      );
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search]);
+
+  return (
   <UsersLayout>
     <Head title="Items" />
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-3 sm:p-4 md:p-6">
@@ -208,8 +222,8 @@ return (
         </div>
 
         {/* Search Bar */}
-        <div className="mb-6 sm:mb-8">
-          <div className="relative w-full sm:max-w-md">
+        <div className="mb-6 sm:mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="relative w-full lg:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <input
               type="text"
@@ -219,10 +233,86 @@ return (
               className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all duration-200 bg-white shadow-sm"
             />
           </div>
+
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 p-1.5 shadow-sm backdrop-blur">
+            {[
+              { id: "browse", label: "Browse Items", icon: Layers3 },
+              { id: "summary", label: "Items Summary", icon: FileText },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
+                    isActive
+                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 pb-96 sm:pb-0 w-full">
+        {activeTab === "summary" ? (
+          <div className="pb-8">
+            <div className="rounded-3xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 overflow-hidden">
+              <div className="border-b border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 px-6 py-6 text-white">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.35em] text-blue-100">Items Summary</p>
+                    <h2 className="mt-2 text-2xl font-semibold">Inventory overview</h2>
+                    <p className="mt-1 text-sm text-slate-200">A clean, document-style summary of every item name, unit, and available quantity.</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-3 text-sm text-slate-100 shadow-inner">
+                    <span className="font-semibold text-white">{summaryItems.length}</span> item(s) listed
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 md:p-8">
+                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 shadow-inner">
+                  <div className="hidden md:grid md:grid-cols-[1.4fr_0.7fr_0.7fr_0.8fr] border-b border-slate-200 bg-white text-xs uppercase tracking-[0.25em] text-slate-500">
+                    <div className="px-5 py-4 font-semibold">Item Name</div>
+                    <div className="px-5 py-4 font-semibold">Unit</div>
+                    <div className="px-5 py-4 font-semibold">Quantity</div>
+                    <div className="px-5 py-4 font-semibold">Status</div>
+                  </div>
+
+                  <div className="divide-y divide-slate-200">
+                    {summaryItems.map((item) => (
+                      <article
+                        key={item.id}
+                        className="grid gap-3 px-4 py-4 transition-colors duration-200 hover:bg-white md:grid-cols-[1.4fr_0.7fr_0.7fr_0.8fr] md:px-5 md:py-5"
+                      >
+                        <div className="space-y-1">
+                          <p className="text-sm font-semibold text-slate-900 md:text-base">{item.description}</p>
+                          <p className="text-xs text-slate-500">Inventory item reference</p>
+                        </div>
+                        <div className="flex items-center text-sm text-slate-700">{item.unit || "Unit"}</div>
+                        <div className="flex items-center text-sm font-semibold text-slate-900">{formatWhole(item.stock_quantity)}</div>
+                        <div className="flex items-center">
+                          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${item.stockTone}`}>
+                            {item.stockLabel}
+                          </span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 md:gap-8 pb-96 sm:pb-0 w-full">
           {/* Items Grid */}
           <div className="w-full lg:col-span-8">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full">
@@ -564,6 +654,8 @@ return (
               </AlertDialog>
             </div>
           </div>
+        )}
+        </>
         )}
       </div>
     </div>
