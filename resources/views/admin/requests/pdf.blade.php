@@ -4,11 +4,14 @@
     <meta charset="utf-8">
     <title>Requisition and Issue Slip</title>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: "Times New Roman", Times, serif;
             font-size: 12px;
             color: black;
-            padding: 10px;
+            margin: 0;
+            padding: 8px;
+            line-height: 1.15;
         }
         .text-center { text-align: center; }
         .text-left { text-align: left; }
@@ -16,10 +19,22 @@
         .font-bold { font-weight: bold; }
         .font-semibold { font-weight: bold; }
         .underline { text-decoration: underline; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px;}
-        td, th { padding: 4px; vertical-align: middle; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 11px;
+        }
+        td, th {
+            padding: 4px;
+            vertical-align: middle;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            white-space: nowrap;
+        }
         .with-border td, .with-border th { border: 1px solid black; }
         .copy-divider { border-top: 2px dashed black; margin: 20px 0; }
+        .wrap-text { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
     </style>
 </head>
 <body>
@@ -102,7 +117,7 @@
             <tr class="with-border text-center">
                 <td></td>
                 <td>{{ $unit }}</td>
-                <td class="text-left" style="padding-left:8px;">{{ $description }}</td>
+                <td class="text-left wrap-text" style="padding-left:8px;">{{ $description }}</td>
                 <td>{{ $quantityRequested }}</td>
                 <td></td>
                 <td></td>
@@ -113,8 +128,8 @@
 
 
         <tr class="with-border">
-            <td colspan="8" style="font-size:14px;">
-                Purpose: <span style="font-size:12px;">{{ $ris->request->purpose ?? '' }}</span>
+            <td colspan="8" class="wrap-text" style="font-size:14px;">
+                Purpose: <span class="wrap-text" style="font-size:12px;">{{ $ris->request->purpose ?? '' }}</span>
             </td>
         </tr>
     </table>
@@ -136,17 +151,17 @@
         </tr>
         <tr>
             <td class="text-left text-nowrap">Printed Name :</td>
-            <td class="font-bold">{{ $requestedByName }}</td>
-            <td class="font-bold">Adeline C. Soriano</td>
-            <td class="font-bold">{{ $issuedByName }}</td>
-            <td class="font-bold">{{ $requestedByName }}</td>
+            <td class="font-bold wrap-text">{{ $requestedByName }}</td>
+            <td class="font-bold wrap-text">Adeline C. Soriano</td>
+            <td class="font-bold wrap-text">{{ $issuedByName }}</td>
+            <td class="font-bold wrap-text">{{ $requestedByName }}</td>
         </tr>
         <tr>
             <td class="text-left">Designation :</td>
-            <td>{{ $requestedByPosition }}</td>
-            <td>Supply Officer</td>
-            <td>{{ $issuedByPosition }}</td>
-            <td>{{ $receivedByPosition }}</td>
+            <td class="wrap-text">{{ $requestedByPosition }}</td>
+            <td class="wrap-text">Supply Officer</td>
+            <td class="wrap-text">{{ $issuedByPosition }}</td>
+            <td class="wrap-text">{{ $receivedByPosition }}</td>
         </tr>
         <tr>
             <td class="text-left">Date :</td>
