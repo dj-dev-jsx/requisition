@@ -35,15 +35,24 @@
         .with-border td, .with-border th { border: 1px solid black; }
         .copy-divider { border-top: 2px dashed black; margin: 20px 0; }
         .wrap-text { overflow-wrap: anywhere; word-break: break-word; white-space: normal; }
+        .fit-text {
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: clip;
+            font-size: 8px;
+            line-height: 1.0;
+        }
     </style>
 </head>
 <body>
 
 @for($copy=0; $copy<2; $copy++)
-    <div style="position:absolute; top:10px; right:20px; font-size:10px; font-weight: 50;">
-    Appendix 63
-</div>
-    <div class="text-center font-bold" style="font-size:16px; margin:30px 0;">
+    @if($copy > 0)
+        <div class="copy-divider" style="margin-top:40px"></div>
+    @endif
+
+    <div style="text-align:right; font-size:10px; margin-top:10px; margin-bottom:8px;">Appendix 63</div>
+    <div class="text-center font-bold" style="font-size:16px; margin:10px 0 30px 0;">
         REQUISITION AND ISSUE SLIP
     </div>
 
@@ -113,14 +122,15 @@
                 $quantityRequested = intval($issued->quantity ?? 0);
                 $quantityIssued = intval($issued->issued_quantity ?? 0);
                 $remarks = $issued->remarks ?? '';
+                $isIssued = $quantityIssued > 0;
             @endphp
             <tr class="with-border text-center">
                 <td></td>
                 <td>{{ $unit }}</td>
                 <td class="text-left wrap-text" style="padding-left:8px;">{{ $description }}</td>
                 <td>{{ $quantityRequested }}</td>
-                <td></td>
-                <td></td>
+                <td style="font-family: 'DejaVu Sans', Arial, sans-serif;">{{ $isIssued ? '✓' : '' }}</td>
+                <td style="font-family: 'DejaVu Sans', Arial, sans-serif;">{{ $isIssued ? '' : '✓' }}</td>
                 <td>{{ $quantityIssued }}</td>
                 <td>{{ $remarks }}</td>
             </tr>
@@ -136,45 +146,41 @@
 
     <table class="with-border" style="width:100%; font-size:11px; text-align:center; margin-top:0 !important;">
         <tr class="font-bold text-left">
-            <td style="width:13%;border:solid black 1px; border-top:none; border-bottom:none;"></td>
-            <td style="width:19%;border:solid black 1px; border-top:none; border-bottom:none;">Requested by:</td>
-            <td style="width:22%;border:solid black 1px; border-top:none; border-bottom:none;">Approved by:</td>
+            <td style="width:8%;border:solid black 1px; border-top:none; border-bottom:none;"></td>
+            <td style="width:23%;border:solid black 1px; border-top:none; border-bottom:none;">Requested by:</td>
+            <td style="width:23%;border:solid black 1px; border-top:none; border-bottom:none;">Approved by:</td>
             <td style="width:23%;border:solid black 1px; border-top:none; border-bottom:none;">Issued by:</td>
             <td style="width:23%;border:solid black 1px; border-top:none; border-bottom:none;">Received by:</td>
         </tr>
         <tr class="text-left">
-            <td style="border-left:solid black 1px; border-top:none;">Signature:</td>
+            <td style="border-left:solid black 1px; border-top:none;"style="width:8%; font-size:8px;">Signature:</td>
             <td style="border:solid black 1px; height:25px; border-top:none;"></td>
             <td style="border:solid black 1px; border-top:none;"></td>
             <td style="border:solid black 1px; border-top:none;"></td>
             <td style="border:solid black 1px; border-top:none;"></td>
         </tr>
         <tr>
-            <td class="text-left text-nowrap">Printed Name :</td>
-            <td class="font-bold wrap-text">{{ $requestedByName }}</td>
-            <td class="font-bold wrap-text">Adeline C. Soriano</td>
-            <td class="font-bold wrap-text">{{ $issuedByName }}</td>
-            <td class="font-bold wrap-text">{{ $requestedByName }}</td>
+            <td class="text-left text-nowrap" style="width:8%; font-size:8px;">Printed Name :</td>
+            <td class="font-bold fit-text" style="width:23%;">{{ $requestedByName }}</td>
+            <td class="font-bold fit-text" style="width:23%;">ADELINE C. SORIANO</td>
+            <td class="font-bold fit-text" style="width:23%;">{{ $issuedByName }}</td>
+            <td class="font-bold fit-text" style="width:23%;">{{ $requestedByName }}</td>
         </tr>
         <tr>
-            <td class="text-left">Designation :</td>
-            <td class="wrap-text">{{ $requestedByPosition }}</td>
-            <td class="wrap-text">Supply Officer</td>
-            <td class="wrap-text">{{ $issuedByPosition }}</td>
-            <td class="wrap-text">{{ $receivedByPosition }}</td>
+            <td class="text-left"style="width:8%; font-size:8px;">Designation :</td>
+            <td class="fit-text" style="width:23%;">{{ $requestedByPosition }}</td>
+            <td class="fit-text" style="width:23%;">SUPPLY OFFICER</td>
+            <td class="fit-text" style="width:23%;">{{ $issuedByPosition }}</td>
+            <td class="fit-text" style="width:23%;">{{ $requestedByPosition }}</td>
         </tr>
         <tr>
-            <td class="text-left">Date :</td>
+            <td class="text-left" style="width:8%; font-size:8px;">Date :</td>
             <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
             <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
             <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
             <td>{{ optional($ris->issue_date)->format('Y-m-d') ?? '' }}</td>
         </tr>
     </table>
-
-    @if($copy === 0)
-        <div class="copy-divider" style="margin-top:40px"></div>
-    @endif
 
 @endfor
 

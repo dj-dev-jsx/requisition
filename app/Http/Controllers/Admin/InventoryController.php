@@ -202,14 +202,13 @@ public function approve(Request $req, Requests $request)
             'approved_at' => now(),
         ]);
 
-        // ✅ Generate RIS Number (YY-MM-###)
+        // ✅ Generate RIS Number (YY-###), resetting yearly
         if (!$request->ris) {
 
             $year = now()->format('y');   // 25
-            $month = now()->format('m');  // 01
-            $prefix = "{$year}-{$month}-";
+            $prefix = "{$year}-";
 
-            // Get latest RIS this month
+            // Get latest RIS for the current year
             $latestRIS = \App\Models\RIS::where('ris_number', 'like', "{$prefix}%")
                 ->lockForUpdate() // 🔥 prevents duplicate in concurrent requests
                 ->orderBy('ris_number', 'desc')
