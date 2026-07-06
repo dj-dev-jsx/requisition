@@ -151,26 +151,34 @@ public function approve(Request $req, Requests $request)
     ]);
 
     if ($request->status !== 'pending') {
-        return redirect()->route('admin.requests')
-            ->withErrors(['error' => 'This request has already been processed.']);
+        return response()->json(['message' => 'This request has already been processed.'], 422);
     }
 
     DB::beginTransaction();
 
     try {
+        $hasPositiveIssueQty = false;
+
         foreach ($request->items as $item) {
             $inventoryItem = $item->item;
-            if ($inventoryItem->status === 'out_of_stock' || $inventoryItem->stock_quantity <= 0) {
+            $issuedQty = max(0, (int) ($req->items[(string) $item->id] ?? 0));
+            $requestedQty = (int) $item->quantity;
+
+            if ($issuedQty > $requestedQty) {
+                $issuedQty = $requestedQty;
+            }
+
+            if ($issuedQty > 0) {
+                $hasPositiveIssueQty = true;
+            }
+
+            if ($issuedQty > 0 && ($inventoryItem->status === 'out_of_stock' || $inventoryItem->stock_quantity <= 0)) {
                 throw new \Exception('Cannot approve request because "' . $inventoryItem->description . '" is out of stock.');
             }
 
-            $issuedQty = (int) ($req->items[(string) $item->id] ?? 0);
-            $inventoryItem = $item->item;
-
-            $stock = $inventoryItem->stock_quantity;
-
+            $stock = max(0, (int) $inventoryItem->stock_quantity);
             if ($issuedQty > $stock) {
-                throw new \Exception('Not enough stock for ' . $inventoryItem->description);
+                $issuedQty = $stock;
             }
 
             if ($issuedQty > 0) {
@@ -195,6 +203,10 @@ public function approve(Request $req, Requests $request)
             ]);
         }
 
+        if (!$hasPositiveIssueQty) {
+            throw new \Exception('Please enter at least one issue quantity.');
+        }
+
         // ✅ Update request
         $request->update([
             'status' => 'processed',
@@ -202,19 +214,22 @@ public function approve(Request $req, Requests $request)
             'approved_at' => now(),
         ]);
 
-        // ✅ Generate RIS Number (YY-###), resetting yearly
+        // ✅ Generate RIS Number (YY-MM-###), resetting yearly
         if (!$request->ris) {
 
-            $year = now()->format('y');   // 25
-            $prefix = "{$year}-";
+            $year = now()->format('y');   // 26
+            $month = now()->format('m');   // 07
+            $prefix = "{$year}-{$month}-";
 
-            // Get latest RIS for the current year
-            $latestRIS = \App\Models\RIS::where('ris_number', 'like', "{$prefix}%")
+            // Get latest RIS for the current year (resets yearly, not monthly)
+            $currentYearPrefix = "{$year}-";
+            $latestRIS = \App\Models\RIS::where('ris_number', 'like', "{$currentYearPrefix}%")
                 ->lockForUpdate() // 🔥 prevents duplicate in concurrent requests
                 ->orderBy('ris_number', 'desc')
                 ->first();
 
             if ($latestRIS) {
+                // Extract the series number from the end (last 3 digits)
                 $lastNumber = (int) substr($latestRIS->ris_number, -3);
                 $nextNumber = str_pad($lastNumber + 1, 3, '0', STR_PAD_LEFT);
             } else {
@@ -236,14 +251,14 @@ public function approve(Request $req, Requests $request)
 
         DB::commit();
 
-    return response()->json([
-        'success' => true,
-        'print_url' => route('admin.requests.print', $request->id),
-    ]);
+        return response()->json([
+            'success' => true,
+            'print_url' => route('admin.requests.print', $request->id),
+        ]);
 
     } catch (\Exception $e) {
         DB::rollback();
-        return back()->withErrors(['error' => $e->getMessage()]);
+        return response()->json(['message' => $e->getMessage()], 422);
     }
 }
 

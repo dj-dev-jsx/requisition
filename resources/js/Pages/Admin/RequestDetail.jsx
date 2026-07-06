@@ -25,24 +25,39 @@ export default function RequestDetail() {
 
   const [quantities, setQuantities] = useState(
     request.items.reduce((acc, item) => {
-      acc[item.id] = Math.min(Number(item.quantity), Number(item.item.stock_quantity));
+      // For processed requests, show the issued quantity
+      if (request.status !== 'pending' && item.issued_quantity !== null) {
+        acc[item.id] = Number(item.issued_quantity);
+      } else {
+        // For pending requests, show the minimum of requested quantity and available stock
+        acc[item.id] = Math.min(Number(item.quantity), Number(item.item.stock_quantity));
+      }
       return acc;
     }, {})
   );
 
+  const hasPositiveIssueQuantity = Object.values(quantities).some((value) => Number(value) > 0);
+  const hasInvalidIssueQuantity = request.items.some((ri) => {
+    const requested = Number(ri.quantity);
+    const selected = Number(quantities[ri.id] ?? 0);
+    const stock = Number(ri.item.stock_quantity);
+
+    return selected > 0 && (selected > requested || selected > stock);
+  });
+
   const [rejectionReason, setRejectionReason] = useState("");
   const [issueDate, setIssueDate] = useState(request.ris?.issue_date ?? "");
 
-  const isApprovalBlocked = request.items.some(
-    (ri) => Number(ri.item.stock_quantity) === 0 || ri.item.status === "out_of_stock"
-  );
+  const isApprovalBlocked = !hasPositiveIssueQuantity || hasInvalidIssueQuantity;
 
-  const handleChange = (id, value, stock) => {
+  const handleChange = (id, value, stock, requested) => {
     let qty = Number(value);
     if (Number.isNaN(qty)) qty = 0;
-    if (qty > stock) {
-      qty = stock;
-      toast.error("Exceeds available stock");
+
+    const maxAllowed = Math.min(stock, requested);
+    if (qty > maxAllowed) {
+      qty = maxAllowed;
+      toast.error("Issue quantity cannot exceed the requested amount or available stock");
     }
     if (qty < 0) qty = 0;
     setQuantities((prev) => ({ ...prev, [id]: qty }));
@@ -53,6 +68,16 @@ export default function RequestDetail() {
       toast.error(
         "One or more items are out of stock. Please resolve the request before approving."
       );
+      return;
+    }
+
+    if (!hasPositiveIssueQuantity) {
+      toast.error("Please enter at least one issue quantity.");
+      return;
+    }
+
+    if (hasInvalidIssueQuantity) {
+      toast.error("Issue quantity cannot exceed the requested amount or available stock.");
       return;
     }
 
@@ -202,9 +227,9 @@ export default function RequestDetail() {
                         <input
                           type="number"
                           min="0"
-                          max={stock}
+                          max={Math.min(stock, Number(ri.quantity))}
                           value={issued}
-                          onChange={(e) => handleChange(ri.id, e.target.value, stock)}
+                          onChange={(e) => handleChange(ri.id, e.target.value, stock, Number(ri.quantity))}
                           className="w-28 text-center border border-slate-200 rounded-2xl px-3 py-2 focus:ring-2 focus:ring-blue-500 bg-white text-slate-900 outline-none"
                         />
                       ) : (
